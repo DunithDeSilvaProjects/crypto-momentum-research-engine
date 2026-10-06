@@ -1,0 +1,15 @@
+# secrets: never commit keys (we only use public market data)
+.env
+*.key
+*.pem
+secrets.toml
+
+# environment and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+data_cache/
+
+# synthetic dry runs are not evidence
+forward_log_synthetic/
