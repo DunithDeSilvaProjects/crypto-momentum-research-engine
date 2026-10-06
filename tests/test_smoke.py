@@ -14,5 +14,3 @@ def test_pct_change_by_hand():
     expected = pd.Series([ np.nan,  0.1, -0.1])
     pd.testing.assert_series_equal(result, expected)
 
-def test_deliberately_fails():
-    assert 1 + 1 == 2
