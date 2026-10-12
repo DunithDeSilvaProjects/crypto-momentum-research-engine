@@ -27,3 +27,20 @@ def test_load_panel_aligns_by_date_and_leaves_nan_before_listing(monkeypatch):
     assert p.quote_volume["BTCUSDT"].iloc[0] == 1000.0
     assert p.funding.shape == p.close.shape
     assert p.funding.isna().all().all()                # no funding data yet: must be empty, not buy volume
+
+
+def test_build_default_panel_uses_the_fixed_universe(monkeypatch):
+    seen = {}
+
+    def fake_load_panel(symbols, start):
+        seen["symbols"] = symbols
+        seen["start"] = start
+        return "sentinel"
+
+    monkeypatch.setattr(data, "load_panel", fake_load_panel)
+
+    out = data.build_default_panel("2022-05-01")
+
+    assert out == "sentinel"
+    assert seen["symbols"] == data.DEFAULT_SYMBOLS
+    assert seen["start"] == "2022-05-01"

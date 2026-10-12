@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import requests
 from pathlib import Path
+from momentum.config import DEFAULT_SYMBOLS
 
 @dataclass
 class Panel:
@@ -71,3 +72,7 @@ def load_panel(symbols: list[str], start: str) -> Panel:
     quote_volume = pd.DataFrame({s: f["quote_volume"] for s, f in frames.items()})
     funding = pd.DataFrame(np.nan, index=close.index, columns=close.columns)
     return Panel(close, quote_volume, funding)
+
+def build_default_panel(start: str = "2021-01-01") -> Panel:
+    """The research universe as one Panel. Every later step starts here."""
+    return load_panel(DEFAULT_SYMBOLS, start)
