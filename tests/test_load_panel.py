@@ -16,9 +16,9 @@ def test_load_panel_aligns_by_date_and_leaves_nan_before_listing(monkeypatch):
         "BTCUSDT": fake_frame(["2024-01-01", "2024-01-02", "2024-01-03"], [100.0, 110.0, 105.0]),
         "SOLUSDT": fake_frame(["2024-01-02", "2024-01-03"], [20.0, 22.0]),
     }
-    monkeypatch.setattr(data, "fetch_klines", lambda s, limit=1000: fakes[s])
+    monkeypatch.setattr(data, "get_history", lambda s, start: fakes[s])
 
-    p = data.load_panel(["BTCUSDT", "SOLUSDT"])
+    p = data.load_panel(["BTCUSDT", "SOLUSDT"], "2024-01-01")
 
     assert list(p.close.columns) == ["BTCUSDT", "SOLUSDT"]
     assert len(p.close) == 3

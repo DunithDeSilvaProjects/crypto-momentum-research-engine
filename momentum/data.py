@@ -65,8 +65,8 @@ def get_history(symbol: str, start: str, cache_dir: str = "data_cache") -> pd.Da
     df.to_parquet(path)
     return df
 
-def load_panel(symbols: list[str], limit: int = 1000) -> Panel:
-    frames = {s: fetch_klines(s, limit=limit) for s in symbols}
+def load_panel(symbols: list[str], start: str) -> Panel:
+    frames = {s: get_history(s, start) for s in symbols}
     close = pd.DataFrame({s: f["close"] for s, f in frames.items()})
     quote_volume = pd.DataFrame({s: f["quote_volume"] for s, f in frames.items()})
     funding = pd.DataFrame(np.nan, index=close.index, columns=close.columns)
