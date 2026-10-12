@@ -20,10 +20,11 @@ class Panel:
 
 BASE = "https://fapi.binance.com"
 
-def fetch_klines(symbol: str, interval: str = "1d", limit: int = 1000) -> pd.DataFrame:
-    """Download recent candles for one symbol; returns completed candles only."""
-    r = requests.get(f"{BASE}/fapi/v1/klines",
-                     params={"symbol": symbol, "interval": interval, "limit": limit}, timeout=30)
+def fetch_klines(symbol: str, interval: str = "1d", limit: int = 1000, start_ms: int | None = None) -> pd.DataFrame:
+    params = {"symbol": symbol, "interval": interval, "limit": limit}
+    if start_ms is not None:
+        params["startTime"] = start_ms
+    r = requests.get(f"{BASE}/fapi/v1/klines", params=params, timeout=30)
     r.raise_for_status()
     cols = ["open_time", "open", "high", "low", "close", "volume", "close_time",
             "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore"]
@@ -34,6 +35,19 @@ def fetch_klines(symbol: str, interval: str = "1d", limit: int = 1000) -> pd.Dat
     for c in ("open", "high", "low", "close", "volume", "quote_volume", "taker_buy_quote"):
         df[c] = pd.to_numeric(df[c])
     return df.set_index("open_time")[["open", "high", "low", "close", "volume", "quote_volume", "taker_buy_quote"]]
+
+def fetch_history(symbol: str, start: str, interval: str = "1d") -> pd.DataFrame:
+    """All completed candles from `start` (e.g. "2021-01-01") up to the last finished one."""
+    step = pd.Timedelta(days=1)
+    start_ms = int(pd.Timestamp(start, tz="UTC").timestamp() * 1000)
+    pages = []
+    while True:
+        page = fetch_klines(symbol, interval, limit=1500, start_ms=start_ms)
+        if page.empty:
+            break
+        pages.append(page)
+        start_ms = int((page.index[-1]+step).timestamp() * 1000)   # start after the last candle
+    return pd.concat(pages) if pages else pd.DataFrame()
 
 def load_panel(symbols: list[str], limit: int = 1000) -> Panel:
     frames = {s: fetch_klines(s, limit=limit) for s in symbols}
