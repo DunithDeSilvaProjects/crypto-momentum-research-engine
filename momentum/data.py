@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 import requests
+from pathlib import Path
 
 @dataclass
 class Panel:
@@ -48,6 +49,21 @@ def fetch_history(symbol: str, start: str, interval: str = "1d") -> pd.DataFrame
         pages.append(page)
         start_ms = int((page.index[-1]+step).timestamp() * 1000)   # start after the last candle
     return pd.concat(pages) if pages else pd.DataFrame()
+
+def get_history(symbol: str, start: str, cache_dir: str = "data_cache") -> pd.DataFrame:
+    """Cached history: read the saved file, fetch only the days after its last date, save again."""
+    path = Path(cache_dir) / f"{symbol}_1d.parquet"
+    if path.exists():
+        cached = pd.read_parquet(path)
+        next_start = (cached.index[-1] + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        new = fetch_history(symbol, next_start)
+        df = pd.concat([cached, new])
+        df = df[~df.index.duplicated(keep="last")]
+    else:
+        df = fetch_history(symbol, start)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(path)
+    return df
 
 def load_panel(symbols: list[str], limit: int = 1000) -> Panel:
     frames = {s: fetch_klines(s, limit=limit) for s in symbols}
