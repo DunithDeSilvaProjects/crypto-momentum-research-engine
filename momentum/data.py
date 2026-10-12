@@ -34,3 +34,10 @@ def fetch_klines(symbol: str, interval: str = "1d", limit: int = 1000) -> pd.Dat
     for c in ("open", "high", "low", "close", "volume", "quote_volume", "taker_buy_quote"):
         df[c] = pd.to_numeric(df[c])
     return df.set_index("open_time")[["open", "high", "low", "close", "volume", "quote_volume", "taker_buy_quote"]]
+
+def load_panel(symbols: list[str], limit: int = 1000) -> Panel:
+    frames = {s: fetch_klines(s, limit=limit) for s in symbols}
+    close = pd.DataFrame({s: f["close"] for s, f in frames.items()})
+    quote_volume = pd.DataFrame({s: f["quote_volume"] for s, f in frames.items()})
+    funding = pd.DataFrame(np.nan, index=close.index, columns=close.columns)
+    return Panel(close, quote_volume, funding)
