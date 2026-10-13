@@ -10,3 +10,9 @@ def trend_score(close: pd.DataFrame, vol: pd.DataFrame, lookback: int) -> pd.Dat
     """Vol-scaled momentum: L-day log return divided by (daily vol x sqrt(L))."""
     log_ret = np.log(close).diff(lookback)
     return log_ret / (vol * np.sqrt(lookback))
+
+def combine_lookbacks(close: pd.DataFrame, vol: pd.DataFrame, lookbacks: tuple) -> pd.DataFrame:
+    """Average of trend_score over several lookbacks. NaN until the longest lookback has data."""
+    scores = [trend_score(close, vol, L) for L in lookbacks]
+    return sum(scores) / len(scores)
+
