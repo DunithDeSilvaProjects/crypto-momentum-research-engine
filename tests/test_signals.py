@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta
 
 
 
@@ -60,4 +60,15 @@ def test_loo_market_excludes_own_return():
     assert m["SOL"].iloc[0] == pytest.approx(0.045)
     assert m["BTC"].iloc[0] == pytest.approx(0.07)
     assert m["ETH"].iloc[0] == pytest.approx(0.065)
+
+
+def test_rolling_beta_recovers_known_betas():
+    mkt = pd.DataFrame({"A": [0.01, 0.02, 0.03], "B": [0.01, 0.02, 0.03]})
+    ret = pd.DataFrame({"A": [0.02, 0.04, 0.06], "B": [0.005, 0.01, 0.015]})
+
+    beta = rolling_beta(ret, mkt, window=3)
+
+    assert beta["A"].iloc[:2].isna().all()
+    assert beta["A"].iloc[2] == pytest.approx(2)    # A moves 2% for each 1% of market
+    assert beta["B"].iloc[2] == pytest.approx(0.5)    # B moves 0.5% for each 1% of market
     

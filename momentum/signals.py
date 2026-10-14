@@ -27,3 +27,12 @@ def loo_market(ret: pd.DataFrame) -> pd.DataFrame:
         others = ret.drop(columns=coin)    # the table without this coin
         out[coin] = others.mean(axis=1)    # average of the rest, one number per day
     return pd.DataFrame(out)
+
+def rolling_beta(ret: pd.DataFrame, mkt: pd.DataFrame, window: int) -> pd.DataFrame:
+    """For each coin: rolling cov(coin, its market) / rolling var(its market)."""
+    out = {}
+    for coin in ret.columns:
+        cov = ret[coin].rolling(window=window).cov(mkt[coin])
+        var = mkt[coin].rolling(window=window).var()
+        out[coin] = cov / var
+    return pd.DataFrame(out)
