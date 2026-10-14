@@ -157,3 +157,39 @@ def test_liquidity_mask():
     assert mask["X"].tolist() == [False, False, True, False, True]
     assert mask["Y"].tolist() == [False, False, False, False, False]
     assert mask["Z"].tolist() == [False, False, False, False, True]
+
+
+CASES = {
+    "ewma_vol": lambda d: ewma_vol(d.pct_change(), 30),
+    "trend_score": lambda d: trend_score(d, ewma_vol(d.pct_change(), 30), 20),
+    "combine": lambda d: combine_lookbacks(d, ewma_vol(d.pct_change(), 30), (10, 20)),
+    "residual": lambda d: residual_trend_score(d, 20, 60, 30),
+    "donchian": lambda d: donchian_position(d, 20),
+    "efficiency": lambda d: efficiency_ratio(d, 20),
+    "zscore": lambda d: cross_sectional_zscore(d),
+    "liquidity": lambda d: liquidity_mask(d, 5, 100.0),
+}
+
+
+def _prices():
+    rng = np.random.default_rng(1)
+    steps = rng.normal(0, 0.02, (200, 5))
+    return pd.DataFrame(100 * np.exp(np.cumsum(steps, axis=0)), columns=list("ABCDE"))
+
+
+def _same_up_to(fn, data, cut):
+    """The signal computed with the future cut off must equal the full-history signal up to day `cut`."""
+    full = fn(data).iloc[:cut + 1]
+    truncated = fn(data.iloc[:cut + 1])
+    pd.testing.assert_frame_equal(full, truncated)
+
+
+@pytest.mark.parametrize("name", CASES)
+def test_no_lookahead(name):
+    _same_up_to(CASES[name], _prices(), cut=150)
+
+
+def test_lookahead_detector_catches_a_leak():
+    leaky = lambda d: d.shift(-1)               # peeks at tomorrow
+    with pytest.raises(AssertionError):
+        _same_up_to(leaky, _prices(), cut=150)
