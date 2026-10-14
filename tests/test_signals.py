@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position,efficiency_ratio
 
 
 
@@ -114,3 +114,17 @@ def test_donchian_position_places_close_inside_its_range():
     assert pos["X"].iloc[:4].isna().all()                   # window of 5 needs 5 closes
     assert pos["X"].iloc[4] == pytest.approx(1)           # 106 is the highest of the 5
     assert pos["X"].iloc[5] == pytest.approx(0.5)           # window is 104, 98, 102, 106, 102
+
+def test_efficiency_ratio():
+    close = pd.DataFrame({
+        "X": [100.0, 102.0, 101.0, 105.0, 107.0],   # net 7, path 2+1+4+2 = 9
+        "Z": [100.0, 101.0, 100.0, 101.0, 100.0],   # zigzag, back to start
+        "S": [100.0, 101.0, 102.0, 103.0, 104.0],   # straight line
+        "F": [5.0] * 5,                             # flat
+    })
+    er = efficiency_ratio(close, window=4)
+    assert er["X"].iloc[:4].isna().all()
+    assert er["X"].iloc[4] == pytest.approx(7 / 9)
+    assert er["Z"].iloc[4] == pytest.approx(0)
+    assert er["S"].iloc[4] == pytest.approx(1)
+    assert np.isnan(er["F"].iloc[4])                # flat: 0/0 -> NaN 

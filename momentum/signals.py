@@ -55,3 +55,9 @@ def donchian_position(close:pd.DataFrame,window:int) -> pd.DataFrame:
     lo = close.rolling(window=window).min()
     hi = close.rolling(window=window).max()
     return (close - lo) / (hi - lo)
+
+def efficiency_ratio(close: pd.DataFrame, window: int) -> pd.DataFrame:
+    """Net move over `window` days divided by the total distance travelled: 1 = straight line, 0 = pure zigzag."""
+    net = close.diff(window).abs()
+    path = close.diff().abs().rolling(window).sum()
+    return net / path
