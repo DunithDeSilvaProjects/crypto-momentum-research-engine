@@ -67,3 +67,8 @@ def cross_sectional_zscore(score: pd.DataFrame) -> pd.DataFrame:
     mean = score.mean(axis=1)
     std = score.std(axis=1)
     return score.sub(mean, axis=0).div(std, axis=0)
+
+def liquidity_mask(quote_volume: pd.DataFrame, window: int, min_volume: float) -> pd.DataFrame:
+    """True where the coin's median daily volume over the last `window` days is at least `min_volume`."""
+    med = quote_volume.rolling(window).median()
+    return med >= min_volume

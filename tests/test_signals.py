@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position,efficiency_ratio,cross_sectional_zscore
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position,efficiency_ratio,cross_sectional_zscore,liquidity_mask
 
 
 
@@ -146,4 +146,14 @@ def test_cross_sectional_zscore():
     assert np.isnan(z.loc[2, "A"])               # missing stays missing
     assert z.loc[2, "B"] == pytest.approx(-1)
     assert z.loc[2, "D"] == pytest.approx(1 )
-    
+
+def test_liquidity_mask():
+    vol = pd.DataFrame({
+        "X": [50.0, 8.0, 12.0, 5.0, 20.0],         # my worked example
+        "Y": [2.0, 2.0, 500.0, 2.0, 2.0],          # one spike day
+        "Z": [np.nan, np.nan, 20.0, 20.0, 20.0],   # listed on day 2
+    })
+    mask = liquidity_mask(vol, window=3, min_volume=10.0)
+    assert mask["X"].tolist() == [False, False, True, False, True]
+    assert mask["Y"].tolist() == [False, False, False, False, False]
+    assert mask["Z"].tolist() == [False, False, False, False, True]
