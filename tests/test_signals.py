@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position
 
 
 
@@ -104,3 +104,13 @@ def test_residual_score_finds_the_coin_with_its_own_trend():
 
     assert score.iloc[-1].idxmax() == "C"           # which coin should the residual score pick?
     assert score.iloc[:60].isna().all().all()         # not enough history for beta yet
+
+
+def test_donchian_position_places_close_inside_its_range():
+    close = pd.DataFrame({"X": [100.0, 104.0, 98.0, 102.0, 106.0, 102.0]})
+
+    pos = donchian_position(close, window=5)
+
+    assert pos["X"].iloc[:4].isna().all()                   # window of 5 needs 5 closes
+    assert pos["X"].iloc[4] == pytest.approx(1)           # 106 is the highest of the 5
+    assert pos["X"].iloc[5] == pytest.approx(0.5)           # window is 104, 98, 102, 106, 102
