@@ -19,3 +19,11 @@ def combine_lookbacks(close: pd.DataFrame, vol: pd.DataFrame, lookbacks: tuple) 
 def winsorize(score: pd.DataFrame, limit: float) -> pd.DataFrame:
     """Cap scores at +/- limit. Keeps sign, keeps the coin, leaves NaN alone."""
     return score.clip(lower=-limit, upper=limit)
+
+def loo_market(ret: pd.DataFrame) -> pd.DataFrame:
+    """For each coin and day: average return of all OTHER coins."""
+    out = {}
+    for coin in ret.columns:
+        others = ret.drop(columns=coin)    # the table without this coin
+        out[coin] = others.mean(axis=1)    # average of the rest, one number per day
+    return pd.DataFrame(out)

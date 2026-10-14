@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market
 
 
 
@@ -50,3 +50,14 @@ def test_winsorize_caps_extremes_and_keeps_nan():
     assert out["X"].iloc[3] == pytest.approx(3.0)                            # 7.5 capped
     assert out["X"].iloc[4] == pytest.approx(-3.0)                            # -4.2 capped
     assert np.isnan(out["X"].iloc[5])                         # NaN stays NaN
+
+
+def test_loo_market_excludes_own_return():
+    ret = pd.DataFrame({"BTC": [0.04], "ETH": [0.05], "SOL": [0.09]})
+
+    m = loo_market(ret)
+
+    assert m["SOL"].iloc[0] == pytest.approx(0.045)
+    assert m["BTC"].iloc[0] == pytest.approx(0.07)
+    assert m["ETH"].iloc[0] == pytest.approx(0.065)
+    
