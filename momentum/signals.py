@@ -49,3 +49,9 @@ def residual_trend_score(close: pd.DataFrame, lookback: int, beta_window: int, v
     res = residual_returns(ret, mkt, beta)            # the coin's return with the market part removed
     vol = ewma_vol(res, vol_halflife)         # how wild the residuals are
     return res.rolling(lookback).sum() / (vol * np.sqrt(lookback))
+
+def donchian_position(close:pd.DataFrame,window:int) -> pd.DataFrame:
+    """For each coin: (today's close - L-day low) / (L-day high - L-day low)."""
+    lo = close.rolling(window=window).min()
+    hi = close.rolling(window=window).max()
+    return (close - lo) / (hi - lo)
