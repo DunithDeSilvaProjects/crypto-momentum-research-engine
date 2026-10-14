@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns
 
 
 
@@ -71,4 +71,14 @@ def test_rolling_beta_recovers_known_betas():
     assert beta["A"].iloc[:2].isna().all()
     assert beta["A"].iloc[2] == pytest.approx(2)    # A moves 2% for each 1% of market
     assert beta["B"].iloc[2] == pytest.approx(0.5)    # B moves 0.5% for each 1% of market
-    
+
+
+def test_residual_returns_use_yesterdays_beta():
+    ret = pd.DataFrame({"X": [0.01, 0.08]})
+    mkt = pd.DataFrame({"X": [0.01, 0.03]})
+    beta = pd.DataFrame({"X": [2.0, 99.0]})    # 99 is poison: today's beta must NOT be used
+
+    res = residual_returns(ret, mkt, beta)
+
+    assert np.isnan(res["X"].iloc[0])           # no yesterday for the first row
+    assert res["X"].iloc[1] == pytest.approx(0.02)   # 8% minus 2.0 x 3%

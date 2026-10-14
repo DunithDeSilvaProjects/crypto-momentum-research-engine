@@ -36,3 +36,7 @@ def rolling_beta(ret: pd.DataFrame, mkt: pd.DataFrame, window: int) -> pd.DataFr
         var = mkt[coin].rolling(window=window).var()
         out[coin] = cov / var
     return pd.DataFrame(out)
+
+def residual_returns(ret: pd.DataFrame, mkt: pd.DataFrame, beta:pd.DataFrame) -> pd.DataFrame:
+    """Coin return minus (yesterday's beta x today's market return)."""
+    return ret-(beta.shift(1)*mkt)
