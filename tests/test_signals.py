@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 import math
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks
+import numpy as np
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize
 
 
 
@@ -38,3 +39,14 @@ def test_combine_lookbacks_averages_and_waits_for_longest_window():
     s4 = trend_score(close, vol, 4)
     assert out["BTC"].iloc[:4].isna().all()                 # the 4-day score needs 4 prior closes
     assert out["BTC"].iloc[4] == pytest.approx((s2["BTC"].iloc[4] + s4["BTC"].iloc[4]) / 2)
+
+
+def test_winsorize_caps_extremes_and_keeps_nan():
+    score = pd.DataFrame({"X": [0.4, -1.1, 0.9, 7.5, -4.2, np.nan]})
+
+    out = winsorize(score, limit=3.0)
+
+    assert out["X"].iloc[:3].tolist() == [0.4, -1.1, 0.9]    # inside the limit: untouched
+    assert out["X"].iloc[3] == pytest.approx(3.0)                            # 7.5 capped
+    assert out["X"].iloc[4] == pytest.approx(-3.0)                            # -4.2 capped
+    assert np.isnan(out["X"].iloc[5])                         # NaN stays NaN

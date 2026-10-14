@@ -16,3 +16,6 @@ def combine_lookbacks(close: pd.DataFrame, vol: pd.DataFrame, lookbacks: tuple) 
     scores = [trend_score(close, vol, L) for L in lookbacks]
     return sum(scores) / len(scores)
 
+def winsorize(score: pd.DataFrame, limit: float) -> pd.DataFrame:
+    """Cap scores at +/- limit. Keeps sign, keeps the coin, leaves NaN alone."""
+    return score.clip(lower=-limit, upper=limit)
