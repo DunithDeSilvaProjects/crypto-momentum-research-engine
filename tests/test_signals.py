@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score
 
 
 
@@ -82,3 +82,25 @@ def test_residual_returns_use_yesterdays_beta():
 
     assert np.isnan(res["X"].iloc[0])           # no yesterday for the first row
     assert res["X"].iloc[1] == pytest.approx(0.02)   # 8% minus 2.0 x 3%
+
+
+def test_residual_score_finds_the_coin_with_its_own_trend():
+    rng = np.random.default_rng(0)
+    n = 300
+    factor = rng.normal(0.003, 0.02, n)               # the common market move
+
+    def noise():
+        return rng.normal(0, 0.004, n)
+
+    ret = pd.DataFrame({
+        "A": 1.0 * factor + noise(),
+        "B": 1.6 * factor + noise(),
+        "C": 0.5 * factor + 0.004 + noise(),          # C has its OWN drift of +0.4% a day
+        "D": 1.0 * factor + noise(),
+    })
+    close = 100 * (1 + ret).cumprod()
+
+    score = residual_trend_score(close, lookback=30, beta_window=60, vol_halflife=30)
+
+    assert score.iloc[-1].idxmax() == "C"           # which coin should the residual score pick?
+    assert score.iloc[:60].isna().all().all()         # not enough history for beta yet

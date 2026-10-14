@@ -40,3 +40,12 @@ def rolling_beta(ret: pd.DataFrame, mkt: pd.DataFrame, window: int) -> pd.DataFr
 def residual_returns(ret: pd.DataFrame, mkt: pd.DataFrame, beta:pd.DataFrame) -> pd.DataFrame:
     """Coin return minus (yesterday's beta x today's market return)."""
     return ret-(beta.shift(1)*mkt)
+
+def residual_trend_score(close: pd.DataFrame, lookback: int, beta_window: int, vol_halflife: float) -> pd.DataFrame:
+    """Vol-scaled momentum of what is left of each coin's return after removing the market."""
+    ret = close.pct_change()
+    mkt = loo_market(ret)                       # each coin's market, leaving itself out
+    beta = rolling_beta(ret, mkt, beta_window)    # how strongly each coin follows it
+    res = residual_returns(ret, mkt, beta)            # the coin's return with the market part removed
+    vol = ewma_vol(res, vol_halflife)         # how wild the residuals are
+    return res.rolling(lookback).sum() / (vol * np.sqrt(lookback))
