@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import math
 import numpy as np
-from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position,efficiency_ratio
+from momentum.signals import ewma_vol, trend_score,combine_lookbacks,winsorize,loo_market,rolling_beta,residual_returns,residual_trend_score,donchian_position,efficiency_ratio,cross_sectional_zscore
 
 
 
@@ -128,3 +128,22 @@ def test_efficiency_ratio():
     assert er["Z"].iloc[4] == pytest.approx(0)
     assert er["S"].iloc[4] == pytest.approx(1)
     assert np.isnan(er["F"].iloc[4])                # flat: 0/0 -> NaN 
+
+
+def test_cross_sectional_zscore():
+    score = pd.DataFrame({
+        "A": [1.0, 5.0, np.nan],
+        "B": [2.0, 5.0, 2.0],
+        "C": [3.0, 5.0, 4.0],
+        "D": [6.0, 5.0, 6.0],
+    })
+    z = cross_sectional_zscore(score)
+    std0 = np.sqrt(14 / 3)                       # row 0 std, dividing by n-1
+    assert z.loc[0, "A"] == pytest.approx(-2 / std0)
+    assert z.loc[0, "C"] == pytest.approx(0 / std0)
+    assert z.loc[0, "D"] == pytest.approx(3 / std0)
+    assert z.loc[1].isna().all()                 # all equal: 0/0 -> NaN
+    assert np.isnan(z.loc[2, "A"])               # missing stays missing
+    assert z.loc[2, "B"] == pytest.approx(-1)
+    assert z.loc[2, "D"] == pytest.approx(1 )
+    

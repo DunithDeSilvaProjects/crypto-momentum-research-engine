@@ -61,3 +61,9 @@ def efficiency_ratio(close: pd.DataFrame, window: int) -> pd.DataFrame:
     net = close.diff(window).abs()
     path = close.diff().abs().rolling(window).sum()
     return net / path
+
+def cross_sectional_zscore(score: pd.DataFrame) -> pd.DataFrame:
+    """Standardise each day across coins: mean 0, std 1 within every row."""
+    mean = score.mean(axis=1)
+    std = score.std(axis=1)
+    return score.sub(mean, axis=0).div(std, axis=0)
