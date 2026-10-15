@@ -55,22 +55,30 @@ def test_fred_api_key_empty_is_also_an_error(monkeypatch):
         macro.fred_api_key()
 
 
-def test_load_fred_aligns_series_by_date(monkeypatch):
-    monkeypatch.setenv("FRED_API_KEY", "KEY")
+def test_load_fred_aligns_series_by_date(monkeypatch,tmp_path):
+
+  
     fakes = {
         "DGS10": pd.Series([4.05, 4.07, 4.10], name="DGS10",
                            index=pd.to_datetime(["2026-10-12", "2026-10-13", "2026-10-14"])),
         "DGS2": pd.Series([3.90, 3.95], name="DGS2",
                           index=pd.to_datetime(["2026-10-12", "2026-10-14"])),
     }
-    monkeypatch.setattr(macro, "fetch_fred_series", lambda sid, key, start: fakes[sid])
+    seen = []
 
-    df = macro.load_fred(["DGS10", "DGS2"], "2026-10-01")
+    def fake_get(sid, start, cache_dir):
+        seen.append((sid, str(cache_dir)))
+        return fakes[sid]
+
+    monkeypatch.setattr(macro, "get_fred_series", fake_get)
+
+    df = macro.load_fred(["DGS10", "DGS2"], "2026-10-01", cache_dir=tmp_path)
 
     assert list(df.columns) == ["DGS10", "DGS2"]
     assert df.shape == (3, 2)
     assert np.isnan(df.loc["2026-10-13", "DGS2"])
     assert df.loc["2026-10-14", "DGS2"] == pytest.approx(3.95)
+    assert seen[0] == ("DGS10", str(tmp_path))      # the first series asked for, and the cache folder passed down
 
 def test_get_fred_series_refetches_a_week_and_keeps_newest(monkeypatch, tmp_path):
     monkeypatch.setenv("FRED_API_KEY", "KEY")

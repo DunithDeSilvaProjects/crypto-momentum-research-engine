@@ -29,10 +29,9 @@ def fred_api_key() -> str:
         raise ValueError("The FRED_API_KEY environment variable is not set")
     return key
 
-def load_fred(series_ids: list[str], start: str) -> pd.DataFrame:
+def load_fred(series_ids: list[str], start: str, cache_dir: str = "data_cache") -> pd.DataFrame:
     """One column per FRED series, rows aligned by date (a date missing from a series is NaN)."""
-    key = fred_api_key()
-    series = [fetch_fred_series(sid, key, start) for sid in series_ids]
+    series = [get_fred_series(sid, start, cache_dir) for sid in series_ids]
     return pd.concat(series, axis=1).sort_index()
 
 def get_fred_series(series_id: str, start: str, cache_dir: str = "data_cache") -> pd.Series:
@@ -47,7 +46,7 @@ def get_fred_series(series_id: str, start: str, cache_dir: str = "data_cache") -
     else:
         out = fetch_fred_series(series_id, key, start)
 
-    out = out[~out.index.duplicated(keep="last")]  # keep the last value if a date was re-fetched
+    out = out[~out.index.duplicated(keep="last")].sort_index()  # keep the last value if a date was re-fetched
     path.parent.mkdir(parents=True, exist_ok=True)
     out.to_frame().to_parquet(path)
     return out
