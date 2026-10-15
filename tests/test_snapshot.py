@@ -59,3 +59,9 @@ def test_snapshot_table_dead_series_gets_a_nan_row_not_a_crash():
     assert pd.isna(t.loc["DEAD", "last_date"])
     assert np.isnan(t.loc["DEAD", "age_days"])
     assert np.isnan(t.loc["DEAD", "chg_1"])
+
+def test_format_change_by_unit():
+    assert snapshot.format_change(-3.0, "bp") == "-3.0 bp"
+    assert snapshot.format_change(2.5, "bp") == "+2.5 bp"
+    assert snapshot.format_change(-0.011083, "pct") == "-1.11%"
+    assert snapshot.format_change(float("nan"), "pct") == "n/a"

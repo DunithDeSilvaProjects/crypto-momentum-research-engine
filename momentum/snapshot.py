@@ -35,3 +35,12 @@ def snapshot_table(df: pd.DataFrame, units: dict, windows=(1, 5, 20)) -> pd.Data
             row[f"chg_{n}"] = obs_change(s, n, units[col])
         rows[col] = row
     return pd.DataFrame.from_dict(rows, orient="index")
+
+def format_change(x: float, unit: str) -> str:
+    if pd.isna(x):
+        return "n/a"
+    if unit == "bp":
+        return f"{x:+.1f} bp"
+    if unit == "pct":
+        return f"{x * 100:+.2f}%"
+    raise ValueError(f"unit must be 'bp' or 'pct', got {unit!r}")
