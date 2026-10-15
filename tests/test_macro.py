@@ -53,3 +53,21 @@ def test_fred_api_key_empty_is_also_an_error(monkeypatch):
     monkeypatch.setenv("FRED_API_KEY", "")
     with pytest.raises(ValueError):
         macro.fred_api_key()
+
+
+def test_load_fred_aligns_series_by_date(monkeypatch):
+    monkeypatch.setenv("FRED_API_KEY", "KEY")
+    fakes = {
+        "DGS10": pd.Series([4.05, 4.07, 4.10], name="DGS10",
+                           index=pd.to_datetime(["2026-10-12", "2026-10-13", "2026-10-14"])),
+        "DGS2": pd.Series([3.90, 3.95], name="DGS2",
+                          index=pd.to_datetime(["2026-10-12", "2026-10-14"])),
+    }
+    monkeypatch.setattr(macro, "fetch_fred_series", lambda sid, key, start: fakes[sid])
+
+    df = macro.load_fred(["DGS10", "DGS2"], "2026-10-01")
+
+    assert list(df.columns) == ["DGS10", "DGS2"]
+    assert df.shape == (3, 2)
+    assert np.isnan(df.loc["2026-10-13", "DGS2"])
+    assert df.loc["2026-10-14", "DGS2"] == pytest.approx(3.95)

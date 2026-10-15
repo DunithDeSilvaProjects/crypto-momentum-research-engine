@@ -27,3 +27,9 @@ def fred_api_key() -> str:
     if not key:
         raise ValueError("The FRED_API_KEY environment variable is not set")
     return key
+
+def load_fred(series_ids: list[str], start: str) -> pd.DataFrame:
+    """One column per FRED series, rows aligned by date (a date missing from a series is NaN)."""
+    key = fred_api_key()
+    series = [fetch_fred_series(sid, key, start) for sid in series_ids]
+    return pd.concat(series, axis=1).sort_index()
