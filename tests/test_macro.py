@@ -37,3 +37,14 @@ def test_fetch_fred_series(monkeypatch):
     assert s.iloc[0] == pytest.approx(4.05)
     assert np.isnan(s.iloc[1])                # FRED writes "." for a missing day
     assert seen["params"]["series_id"] == "DGS10"
+
+
+def test_fred_api_key_reads_environment(monkeypatch):
+    monkeypatch.setenv("FRED_API_KEY", "abc123")
+    assert macro.fred_api_key() == "abc123"
+
+
+def test_fred_api_key_missing_is_a_clear_error(monkeypatch):
+    monkeypatch.delenv("FRED_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="FRED_API_KEY environment variable is not set"):
+        macro.fred_api_key()

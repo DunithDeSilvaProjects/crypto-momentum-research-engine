@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import os
 
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 
@@ -19,3 +20,10 @@ def fetch_fred_series(series_id: str, api_key: str, start: str) -> pd.Series:
     dates = pd.to_datetime([o["date"] for o in obs])
     values = pd.to_numeric([o["value"] for o in obs], errors="coerce")  # '.' -> NaN
     return pd.Series(values, index=dates, name=series_id)
+
+def fred_api_key() -> str:
+    """Read the FRED key from the environment; fail loudly if it is missing."""
+    key = os.environ.get("FRED_API_KEY")
+    if key is None:
+        raise ValueError("The FRED_API_KEY environment variable is not set")
+    return key
