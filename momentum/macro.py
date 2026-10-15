@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import os
+from pathlib import Path
 
 FRED_URL = "https://api.stlouisfed.org/fred/series/observations"
 
@@ -33,3 +34,20 @@ def load_fred(series_ids: list[str], start: str) -> pd.DataFrame:
     key = fred_api_key()
     series = [fetch_fred_series(sid, key, start) for sid in series_ids]
     return pd.concat(series, axis=1).sort_index()
+
+def get_fred_series(series_id: str, start: str, cache_dir: str = "data_cache") -> pd.Series:
+    """FRED series cached as Parquet; re-fetches the last week so late or revised values are picked up."""
+    path = Path(cache_dir) / f"fred_{series_id}.parquet"
+    key = fred_api_key()
+    if path.exists():
+        old = pd.read_parquet(path)[series_id]
+        fetch_from = (old.index.max() - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
+        new = fetch_fred_series(series_id, key, fetch_from)
+        out = pd.concat([old, new])
+    else:
+        out = fetch_fred_series(series_id, key, start)
+
+    out = out[~out.index.duplicated(keep="last")]  # keep the last value if a date was re-fetched
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out.to_frame().to_parquet(path)
+    return out

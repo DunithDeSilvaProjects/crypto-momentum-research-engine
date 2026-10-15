@@ -71,3 +71,27 @@ def test_load_fred_aligns_series_by_date(monkeypatch):
     assert df.shape == (3, 2)
     assert np.isnan(df.loc["2026-10-13", "DGS2"])
     assert df.loc["2026-10-14", "DGS2"] == pytest.approx(3.95)
+
+def test_get_fred_series_refetches_a_week_and_keeps_newest(monkeypatch, tmp_path):
+    monkeypatch.setenv("FRED_API_KEY", "KEY")
+    calls = []
+    first = pd.Series([4.05, 4.07, np.nan], name="DGS10",
+                      index=pd.to_datetime(["2026-10-12", "2026-10-13", "2026-10-14"]))
+    second = pd.Series([4.10, 4.12], name="DGS10",
+                       index=pd.to_datetime(["2026-10-14", "2026-10-15"]))
+    replies = [first, second]
+
+    def fake_fetch(sid, key, start):
+        calls.append(start)
+        return replies[len(calls) - 1]
+
+    monkeypatch.setattr(macro, "fetch_fred_series", fake_fetch)
+
+    macro.get_fred_series("DGS10", "2020-01-01", cache_dir=tmp_path)
+    s = macro.get_fred_series("DGS10", "2020-01-01", cache_dir=tmp_path)
+
+    assert calls[0] == "2020-01-01"                            # first run: no cache yet
+    assert calls[1] == "2026-10-07"                            # second run: a week before the last cached date
+    assert len(s) == 4                                 # 12, 13, 14 and 15, with no duplicates
+    assert s.loc["2026-10-14"] == pytest.approx(4.10)    # the new value replaced the NaN
+    assert s.loc["2026-10-12"] == pytest.approx(4.05)    # this one comes only from the cache
