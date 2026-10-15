@@ -48,3 +48,8 @@ def test_fred_api_key_missing_is_a_clear_error(monkeypatch):
     monkeypatch.delenv("FRED_API_KEY", raising=False)
     with pytest.raises(ValueError, match="FRED_API_KEY environment variable is not set"):
         macro.fred_api_key()
+
+def test_fred_api_key_empty_is_also_an_error(monkeypatch):
+    monkeypatch.setenv("FRED_API_KEY", "")
+    with pytest.raises(ValueError):
+        macro.fred_api_key()

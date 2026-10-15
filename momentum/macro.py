@@ -24,6 +24,6 @@ def fetch_fred_series(series_id: str, api_key: str, start: str) -> pd.Series:
 def fred_api_key() -> str:
     """Read the FRED key from the environment; fail loudly if it is missing."""
     key = os.environ.get("FRED_API_KEY")
-    if key is None:
+    if not key:
         raise ValueError("The FRED_API_KEY environment variable is not set")
     return key
