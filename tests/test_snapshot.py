@@ -44,3 +44,18 @@ def test_snapshot_table_one_row_per_series():
     assert t.loc["US10", "chg_1"] == pytest.approx(-3)
     assert np.isnan(t.loc["US10", "chg_2"])
     assert t.loc["SPX", "chg_2"] == pytest.approx(99.0 / 100.0 - 1)
+
+def test_snapshot_table_dead_series_gets_a_nan_row_not_a_crash():
+    idx = pd.to_datetime(["2026-10-13", "2026-10-14"])
+    df = pd.DataFrame({"US10": [4.00, 3.97],
+                       "DEAD": [np.nan, np.nan]}, index=idx)
+    units = {"US10": "bp", "DEAD": "pct"}
+
+    t = snapshot.snapshot_table(df, units, windows=(1,))
+
+    assert list(t.index) == ["US10", "DEAD"]
+    assert t.loc["US10", "chg_1"] == pytest.approx(-3)
+    assert np.isnan(t.loc["DEAD", "last"])
+    assert pd.isna(t.loc["DEAD", "last_date"])
+    assert np.isnan(t.loc["DEAD", "age_days"])
+    assert np.isnan(t.loc["DEAD", "chg_1"])

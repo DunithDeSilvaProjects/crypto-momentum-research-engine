@@ -18,6 +18,14 @@ def snapshot_table(df: pd.DataFrame, units: dict, windows=(1, 5, 20)) -> pd.Data
     rows = {}
     for col in df.columns:
         s = df[col].dropna()
+        if s.empty:
+            rows[col] = {
+                "last": np.nan,
+                "last_date": pd.NaT,
+                "age_days": np.nan,
+                **{f"chg_{n}": np.nan for n in windows},
+            }
+            continue
         row = {
             "last": s.iloc[-1],
             "last_date": s.index[-1],
