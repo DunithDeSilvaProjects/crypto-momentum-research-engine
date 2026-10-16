@@ -85,3 +85,17 @@ def test_render_text_one_line_per_series_with_stale_flag():
     assert "STALE" not in lines[0]
     assert "14 Oct" in lines[0]    # US10's as-of date, written like 14 Oct
     assert "13 Oct" in lines[2]    # WTI's as-of date
+
+def test_render_text_uses_labels_and_aligns_columns():
+    idx = pd.to_datetime(["2026-10-12", "2026-10-13", "2026-10-14"])
+    df = pd.DataFrame({"US10": [4.00, np.nan, 3.97],
+                       "SPX": [100.0, 110.0, 99.0],
+                       "WTI": [70.0, 71.0, np.nan]}, index=idx)
+    units = {"US10": "bp", "SPX": "pct", "WTI": "pct"}
+    t = snapshot.snapshot_table(df, units, windows=(1, 2))
+    labels = {"US10": "US 10y yield", "SPX": "S&P 500", "WTI": "WTI crude"}
+
+    lines = snapshot.render_text(t, units, windows=(1, 2), labels=labels).splitlines()
+
+    assert lines[0].startswith("US 10y yield")
+    assert len({line.index("(") for line in lines}) == 1

@@ -45,10 +45,13 @@ def format_change(x: float, unit: str) -> str:
         return f"{x * 100:+.2f}%"
     raise ValueError(f"unit must be 'bp' or 'pct', got {unit!r}")
 
-def render_text(table: pd.DataFrame, units: dict, windows=(1, 5, 20), stale_after: int = 3) -> str:
+def render_text(table, units, windows=(1, 5, 20), stale_after: int = 3, labels=None) -> str:
+    labels = labels or {}
+    names = {key: labels.get(key, key) for key in table.index}
+    width = max(len(v) for v in names.values()) + 2
     out = []                                              # will hold one text line per series
     for name, r in table.iterrows():                      # name = "US10", r = that row's values
-        parts = [f"{name:<8}{r['last']:>10.2f} ({r['last_date']:%d %b})"]
+        parts = [f"{names[name]:<{width}}{r['last']:>10.2f} ({r['last_date']:%d %b})"]
         for n in windows:                                 # one piece per window: "1d -3.0 bp"
             parts.append(f"{n}d {format_change(r[f'chg_{n}'], units[name])}")
         line = "  ".join(parts)                           # glue the pieces with two spaces
