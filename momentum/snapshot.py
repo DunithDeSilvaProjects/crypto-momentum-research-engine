@@ -48,7 +48,7 @@ def format_change(x: float, unit: str) -> str:
 def render_text(table: pd.DataFrame, units: dict, windows=(1, 5, 20), stale_after: int = 3) -> str:
     out = []                                              # will hold one text line per series
     for name, r in table.iterrows():                      # name = "US10", r = that row's values
-        parts = [f"{name:<8}{r['last']:>10.2f}"]          # "US10" padded, then the last value
+        parts = [f"{name:<8}{r['last']:>10.2f} ({r['last_date']:%d %b})"]
         for n in windows:                                 # one piece per window: "1d -3.0 bp"
             parts.append(f"{n}d {format_change(r[f'chg_{n}'], units[name])}")
         line = "  ".join(parts)                           # glue the pieces with two spaces

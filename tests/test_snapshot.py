@@ -83,3 +83,5 @@ def test_render_text_one_line_per_series_with_stale_flag():
     assert "-10.00%" in lines[1]
     assert "STALE" in lines[2]
     assert "STALE" not in lines[0]
+    assert "14 Oct" in lines[0]    # US10's as-of date, written like 14 Oct
+    assert "13 Oct" in lines[2]    # WTI's as-of date
