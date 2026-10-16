@@ -44,3 +44,15 @@ def format_change(x: float, unit: str) -> str:
     if unit == "pct":
         return f"{x * 100:+.2f}%"
     raise ValueError(f"unit must be 'bp' or 'pct', got {unit!r}")
+
+def render_text(table: pd.DataFrame, units: dict, windows=(1, 5, 20), stale_after: int = 3) -> str:
+    out = []                                              # will hold one text line per series
+    for name, r in table.iterrows():                      # name = "US10", r = that row's values
+        parts = [f"{name:<8}{r['last']:>10.2f}"]          # "US10" padded, then the last value
+        for n in windows:                                 # one piece per window: "1d -3.0 bp"
+            parts.append(f"{n}d {format_change(r[f'chg_{n}'], units[name])}")
+        line = "  ".join(parts)                           # glue the pieces with two spaces
+        if r["age_days"] > stale_after:                    # too old? add the warning
+            line += f"  STALE ({int(r['age_days'])}d old)"
+        out.append(line)
+    return "\n".join(out)                                 # all lines into one text block

@@ -65,3 +65,21 @@ def test_format_change_by_unit():
     assert snapshot.format_change(2.5, "bp") == "+2.5 bp"
     assert snapshot.format_change(-0.011083, "pct") == "-1.11%"
     assert snapshot.format_change(float("nan"), "pct") == "n/a"
+
+def test_render_text_one_line_per_series_with_stale_flag():
+    idx = pd.to_datetime(["2026-10-12", "2026-10-13", "2026-10-14"])
+    df = pd.DataFrame({"US10": [4.00, np.nan, 3.97],
+                       "SPX": [100.0, 110.0, 99.0],
+                       "WTI": [70.0, 71.0, np.nan]}, index=idx)
+    units = {"US10": "bp", "SPX": "pct", "WTI": "pct"}
+    t = snapshot.snapshot_table(df, units, windows=(1, 2))
+
+    lines = snapshot.render_text(t, units, windows=(1, 2), stale_after=0).splitlines()
+
+    assert len(lines) == 3
+    assert lines[0].startswith("US10")
+    assert "-3.0 bp" in lines[0]
+    assert "n/a" in lines[0]
+    assert "-10.00%" in lines[1]
+    assert "STALE" in lines[2]
+    assert "STALE" not in lines[0]
