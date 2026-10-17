@@ -116,3 +116,23 @@ def test_top_drivers_picks_the_largest_pushes_each_way():
     d = scoring.top_drivers(c, k=5)
     assert len(d["positive"]) == 3
     assert len(d["negative"]) == 2
+
+def test_traditional_report_chains_signals_score_coverage_and_drivers():
+    df = pd.DataFrame({"US10": [4.00, 4.02, 3.99, 4.03, 4.00, 3.97],
+                       "SPX": [100, 110, 99, 108.9, 98.01, 107.811]})
+    spec = {
+        "rates":  {"col": "US10", "unit": "bp",  "up_is_good": False, "weight": 50},
+        "stocks": {"col": "SPX",  "unit": "pct", "up_is_good": True,  "weight": 30},
+        "dollar": {"col": "NOPE", "unit": "pct", "up_is_good": False, "weight": 20},
+    }
+
+    r = scoring.traditional_report(df, spec, n=1, lookback=4, k=2)
+
+    assert r["score"] == pytest.approx(40)
+    assert r["coverage"] == pytest.approx(0.8)
+    assert r["label"] == scoring.regime_label(r["score"])
+    pos = r["drivers"]["positive"]
+    assert [name for name, _ in pos] == ["rates", "stocks"]
+    assert [value for _, value in pos] == pytest.approx([25, 15])
+    assert r["drivers"]["negative"] == []
+    assert list(r["signals"]) == ["rates", "stocks", "dollar"]

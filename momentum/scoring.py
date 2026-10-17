@@ -67,3 +67,16 @@ def top_drivers(contribs: pd.Series, k: int = 2) -> dict:
     pos = contribs[contribs > 0].sort_values(ascending=False).head(k)
     neg = contribs[contribs < 0].sort_values().head(k)
     return {"positive": list(pos.items()), "negative": list(neg.items())}
+
+def traditional_report(df, spec, n, lookback, k=2) -> dict:
+    sig = component_signals(df, spec, n, lookback)
+    weights = {name: c["weight"] for name, c in spec.items()}
+    contribs = contributions(sig, weights)
+    score = contribs.sum()
+    return {
+        "score": score,
+        "coverage": coverage(sig, weights),
+        "label": regime_label(score),
+        "drivers": top_drivers(contribs, k),
+        "signals": sig,
+    }
