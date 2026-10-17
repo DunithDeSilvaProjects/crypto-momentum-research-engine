@@ -28,15 +28,21 @@ SCORE_NAMES = {
     "equities": "Equity trend", "vix": "VIX", "spreads": "HY credit spreads",
     "dollar": "Dollar (broad)", "real_yield": "10y real yield", "curve": "10y-2y curve",
 }
+
+MAX_AGE_DAYS = 3
+
 assert sum(c["weight"] for c in TRADITIONAL_SPEC.values()) == 100
 
 def main() -> None:
     df = load_fred(list(UNITS.keys()), start="2025-01-01")
     table = snapshot.snapshot_table(df, UNITS, windows=WINDOWS)
     print(snapshot.render_text(table, UNITS, windows=WINDOWS, stale_after=3, labels=LABELS))
-    report = scoring.traditional_report(df, TRADITIONAL_SPEC, n=1, lookback=60)
+    stale = scoring.stale_columns(df, MAX_AGE_DAYS)
+    report = scoring.traditional_report(df.drop(columns=stale), TRADITIONAL_SPEC, n=1, lookback=60)
     print()
     print(scoring.render_score(report, SCORE_NAMES))
+    if stale:
+        print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
 
 
 if __name__ == "__main__":
