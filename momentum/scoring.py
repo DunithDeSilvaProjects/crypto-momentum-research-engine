@@ -57,3 +57,8 @@ def component_signals(df: pd.DataFrame, spec: dict, n: int, lookback: int) -> di
             continue
         out[name] = component_signal(df[c["col"]], n, c["unit"], c["up_is_good"], lookback)
     return out
+
+def coverage(signals: dict, weights: dict) -> float:
+    total = sum(weights.values())
+    covered = sum(w for name, w in weights.items() if not np.isnan(signals[name]))
+    return covered / total

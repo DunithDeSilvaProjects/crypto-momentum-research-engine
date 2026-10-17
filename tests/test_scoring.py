@@ -86,3 +86,20 @@ def test_component_signals_applies_each_spec_and_survives_a_missing_column():
     assert sig["rates"] == pytest.approx(0.5)
     assert sig["stocks"] == pytest.approx(0.5)
     assert np.isnan(sig["dollar"])
+
+def test_coverage_is_the_share_of_weight_that_has_a_signal():
+    weights = {"rates": 50, "stocks": 30, "dollar": 20}
+
+    # dollar missing: we see 50 + 30 of 100
+    sig = {"rates": 0.5, "stocks": -0.2, "dollar": np.nan}
+    assert scoring.coverage(sig, weights) == pytest.approx(0.8)
+
+    # nothing missing
+    sig = {"rates": 0.5, "stocks": -0.2, "dollar": 0.1}
+    assert scoring.coverage(sig, weights) == pytest.approx(1.0)
+    # everything missing
+    sig = {"rates": np.nan, "stocks": np.nan, "dollar": np.nan}
+    assert scoring.coverage(sig, weights) == pytest.approx(0.0)
+
+    # weights that do not sum to 100: divide by their own total
+    assert scoring.coverage({"a": 1.0, "b": np.nan}, {"a": 1, "b": 3}) == pytest.approx(0.25)
