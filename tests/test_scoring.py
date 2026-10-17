@@ -136,3 +136,25 @@ def test_traditional_report_chains_signals_score_coverage_and_drivers():
     assert [value for _, value in pos] == pytest.approx([25, 15])
     assert r["drivers"]["negative"] == []
     assert list(r["signals"]) == ["rates", "stocks", "dollar"]
+
+def test_render_score_prints_headline_and_drivers():
+    report = {"score": -16.5, "label": "neutral", "coverage": 0.85,
+              "drivers": {"positive": [("equities", 10.0), ("spreads", 3.0)],
+                          "negative": [("real_yield", -16.0), ("vix", -15.0)]}}
+    names = {"equities": "Equity trend", "real_yield": "10y real yield"}
+
+    lines = scoring.render_score(report, names).split("\n")
+
+    assert lines[0] == "Traditional regime: -16.5 (neutral)  coverage 85%"
+    assert lines[1] == "Pushing up:   Equity trend +10.0, spreads +3.0"
+    assert lines[2] == "Pushing down: 10y real yield -16.0, vix -15.0"
+
+
+def test_render_score_says_none_when_a_side_is_empty():
+    report = {"score": 0.0, "label": "neutral", "coverage": 1.0,
+              "drivers": {"positive": [], "negative": []}}
+
+    lines = scoring.render_score(report).split("\n")
+
+    assert lines[1] == "Pushing up:   none"
+    assert lines[2] == "Pushing down: none"

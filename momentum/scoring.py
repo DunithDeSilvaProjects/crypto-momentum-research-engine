@@ -80,3 +80,19 @@ def traditional_report(df, spec, n, lookback, k=2) -> dict:
         "drivers": top_drivers(contribs, k),
         "signals": sig,
     }
+
+def render_score(report: dict, names: dict | None = None) -> str:
+    names = names or {}
+
+    def fmt(items):
+        if not items:
+            return "none"
+        return ", ".join(f"{names.get(key, key)} {value:+.1f}" for key, value in items)
+
+    head = (f"Traditional regime: {report['score']:+.1f} ({report['label']})"
+            f"  coverage {report['coverage']:.0%}")
+    return "\n".join([
+        head,
+        f"Pushing up:   {fmt(report['drivers']['positive'])}",
+        f"Pushing down: {fmt(report['drivers']['negative'])}",
+    ])
