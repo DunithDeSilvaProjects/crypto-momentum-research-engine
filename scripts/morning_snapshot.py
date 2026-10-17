@@ -38,7 +38,7 @@ def main() -> None:
     table = snapshot.snapshot_table(df, UNITS, windows=WINDOWS)
     print(snapshot.render_text(table, UNITS, windows=WINDOWS, stale_after=3, labels=LABELS))
     stale = scoring.stale_columns(df, MAX_AGE_DAYS)
-    report = scoring.traditional_report(df.drop(columns=stale), TRADITIONAL_SPEC, n=1, lookback=60)
+    report = scoring.traditional_report(df.drop(columns=stale), TRADITIONAL_SPEC, n=5, lookback=60)
     print()
     print(scoring.render_score(report, SCORE_NAMES))
     if stale:
