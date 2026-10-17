@@ -51,6 +51,9 @@ def render_text(table, units, windows=(1, 5, 20), stale_after: int = 3, labels=N
     width = max(len(v) for v in names.values()) + 2
     out = []                                              # will hold one text line per series
     for name, r in table.iterrows():                      # name = "US10", r = that row's values
+        if pd.isna(r["last"]):
+            out.append(f"{names[name]:<{width}}unavailable")
+            continue
         parts = [f"{names[name]:<{width}}{r['last']:>10.2f} ({r['last_date']:%d %b})"]
         for n in windows:                                 # one piece per window: "1d -3.0 bp"
             parts.append(f"{n}d {format_change(r[f'chg_{n}'], units[name])}")

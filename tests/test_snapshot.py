@@ -99,3 +99,17 @@ def test_render_text_uses_labels_and_aligns_columns():
 
     assert lines[0].startswith("US 10y yield")
     assert len({line.index("(") for line in lines}) == 1
+
+
+def test_render_text_shows_unavailable_for_a_dead_series():
+    idx = pd.to_datetime(["2026-10-13", "2026-10-14"])
+    df = pd.DataFrame({"US10": [4.00, 3.97],
+                       "DEAD": [np.nan, np.nan]}, index=idx)
+    units = {"US10": "bp", "DEAD": "pct"}
+    t = snapshot.snapshot_table(df, units, windows=(1,))
+
+    lines = snapshot.render_text(t, units, windows=(1,)).splitlines()
+
+    assert len(lines) == 2
+    assert "unavailable" in lines[1]
+    assert lines[1].startswith("DEAD")
