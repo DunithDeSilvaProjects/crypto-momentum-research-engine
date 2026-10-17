@@ -103,3 +103,16 @@ def test_coverage_is_the_share_of_weight_that_has_a_signal():
 
     # weights that do not sum to 100: divide by their own total
     assert scoring.coverage({"a": 1.0, "b": np.nan}, {"a": 1, "b": 3}) == pytest.approx(0.25)
+
+def test_top_drivers_picks_the_largest_pushes_each_way():
+    c = pd.Series({"equities": 10, "vix": -15, "spreads": 3,
+                   "dollar": 0, "real_yield": -16, "curve": 1.5})
+
+    d = scoring.top_drivers(c, k=2)
+    assert d["positive"] == [("equities", 10), ("spreads", 3)]
+    assert d["negative"] == [("real_yield", -16), ("vix", -15)]
+
+    # k larger than what exists: the zero never appears
+    d = scoring.top_drivers(c, k=5)
+    assert len(d["positive"]) == 3
+    assert len(d["negative"]) == 2

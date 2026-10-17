@@ -62,3 +62,8 @@ def coverage(signals: dict, weights: dict) -> float:
     total = sum(weights.values())
     covered = sum(w for name, w in weights.items() if not np.isnan(signals[name]))
     return covered / total
+
+def top_drivers(contribs: pd.Series, k: int = 2) -> dict:
+    pos = contribs[contribs > 0].sort_values(ascending=False).head(k)
+    neg = contribs[contribs < 0].sort_values().head(k)
+    return {"positive": list(pos.items()), "negative": list(neg.items())}
