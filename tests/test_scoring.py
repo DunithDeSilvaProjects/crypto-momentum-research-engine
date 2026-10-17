@@ -33,3 +33,13 @@ def test_normal_size_is_mean_abs_of_past_moves_excluding_today():
     assert scoring.normal_size(s, 1, "bp", lookback=4) == pytest.approx(3.0)
     assert scoring.normal_size(s, 1, "bp", lookback=2) == pytest.approx(3.5)
     assert np.isnan(scoring.normal_size(pd.Series([4.00, 4.02]), 1, "bp", lookback=4))
+
+def test_component_signal_glues_change_normal_size_and_direction():
+    s = pd.Series([4.00, 4.02, 3.99, 4.03, 4.00, 3.97])
+    assert scoring.component_signal(s, 1, "bp", True, 4) == pytest.approx(-0.5)
+    assert scoring.component_signal(s, 1, "bp", False, 4) == pytest.approx(0.5)
+
+    big = pd.Series([4.00, 4.02, 3.99, 4.03, 4.00, 4.06])
+    assert scoring.component_signal(big, 1, "bp", True, 4) == pytest.approx(1.0)
+
+    assert np.isnan(scoring.component_signal(pd.Series([4.00, 4.02]), 1, "bp", True, 4))

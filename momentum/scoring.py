@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from momentum.snapshot import obs_change
 
 
 def signal(change: float, normal: float, up_is_good: bool) -> float:
@@ -22,3 +23,8 @@ def normal_size(series: pd.Series, n: int, unit: str, lookback: int) -> float:
     if past.empty:
         return np.nan
     return past.abs().mean()
+
+def component_signal(series: pd.Series, n: int, unit: str, up_is_good: bool, lookback: int) -> float:
+    change = obs_change(series, n, unit)
+    normal = normal_size(series, n, unit, lookback)
+    return signal(change, normal, up_is_good)
