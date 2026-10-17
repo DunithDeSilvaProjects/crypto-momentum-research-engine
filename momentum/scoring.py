@@ -15,3 +15,10 @@ def change_series(series: pd.Series, n: int, unit: str) -> pd.Series:
     if unit == "pct":
         return s / s.shift(n) - 1
     raise ValueError(f"unit must be 'bp' or 'pct', got {unit!r}")
+
+def normal_size(series: pd.Series, n: int, unit: str, lookback: int) -> float:
+    ch = change_series(series, n, unit).dropna()
+    past = ch.iloc[:-1].tail(lookback)
+    if past.empty:
+        return np.nan
+    return past.abs().mean()
