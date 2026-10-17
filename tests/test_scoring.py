@@ -58,3 +58,15 @@ def test_contributions_are_weight_times_signal_with_missing_as_zero():
     assert c["dollar"] == pytest.approx(0.0)
     assert c["real_yield"] == pytest.approx(-16.0)
     assert c.sum() == pytest.approx(-16.5)
+
+def test_regime_label_boundaries():
+    assert scoring.regime_label(-60) == "strongly risk-off"
+    assert scoring.regime_label(-59.9) == "cautious"
+    assert scoring.regime_label(-20) == "cautious"
+    assert scoring.regime_label(-19.9) == "neutral"
+    assert scoring.regime_label(19.9) == "neutral"
+    assert scoring.regime_label(20) == "constructive"
+    assert scoring.regime_label(59.9) == "constructive"
+    assert scoring.regime_label(60) == "strongly risk-on"
+    assert scoring.regime_label(-16.5) == "neutral"
+    assert scoring.regime_label(float("nan")) == "unavailable"

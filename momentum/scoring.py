@@ -35,3 +35,16 @@ def contributions(signals: dict, weights: dict) -> pd.Series:
         k: weights[k] * (0 if pd.isna(signals[k]) else signals[k])
         for k in weights
     })
+
+def regime_label(score: float) -> str:
+    if pd.isna(score):
+        return "unavailable"
+    if score <= -60:
+        return "strongly risk-off"
+    if score <= -20:
+        return "cautious"
+    if score < 20:
+        return "neutral"
+    if score < 60:
+        return "constructive"
+    return "strongly risk-on"
