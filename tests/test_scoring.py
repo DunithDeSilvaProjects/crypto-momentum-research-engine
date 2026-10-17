@@ -43,3 +43,18 @@ def test_component_signal_glues_change_normal_size_and_direction():
     assert scoring.component_signal(big, 1, "bp", True, 4) == pytest.approx(1.0)
 
     assert np.isnan(scoring.component_signal(pd.Series([4.00, 4.02]), 1, "bp", True, 4))
+
+def test_contributions_are_weight_times_signal_with_missing_as_zero():
+    weights = {"equities": 20, "vix": 15, "spreads": 15, "dollar": 15,
+               "real_yield": 20, "curve": 15}
+    signals = {"equities": 0.5, "vix": -1.0, "spreads": 0.2, "dollar": np.nan,
+               "real_yield": -0.8, "curve": 0.1}
+
+    c = scoring.contributions(signals, weights)
+
+    assert list(c.index) == list(weights)
+    assert c["equities"] == pytest.approx(10.0)
+    assert c["vix"] == pytest.approx(-15.0)
+    assert c["dollar"] == pytest.approx(0.0)
+    assert c["real_yield"] == pytest.approx(-16.0)
+    assert c.sum() == pytest.approx(-16.5)

@@ -28,3 +28,10 @@ def component_signal(series: pd.Series, n: int, unit: str, up_is_good: bool, loo
     change = obs_change(series, n, unit)
     normal = normal_size(series, n, unit, lookback)
     return signal(change, normal, up_is_good)
+
+
+def contributions(signals: dict, weights: dict) -> pd.Series:
+    return pd.Series({
+        k: weights[k] * (0 if pd.isna(signals[k]) else signals[k])
+        for k in weights
+    })
