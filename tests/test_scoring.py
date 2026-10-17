@@ -158,3 +158,17 @@ def test_render_score_says_none_when_a_side_is_empty():
 
     assert lines[1] == "Pushing up:   none"
     assert lines[2] == "Pushing down: none"
+
+
+def test_stale_columns_flags_old_or_empty_series():
+    idx = pd.to_datetime(["2026-10-09", "2026-10-12", "2026-10-15", "2026-10-16"])
+    df = pd.DataFrame({
+        "A": [1, 2, 3, 4],                       # last valid 16 Oct, age 0
+        "B": [1, 2, 3, np.nan],                  # last valid 15 Oct, age 1
+        "C": [1, np.nan, np.nan, np.nan],        # last valid 09 Oct, age 7
+        "D": [np.nan, np.nan, np.nan, np.nan],   # never valid
+    }, index=idx)
+
+    assert scoring.stale_columns(df, max_age_days=3) == ["C", "D"]
+    # age exactly equal to the limit is allowed
+    assert scoring.stale_columns(df, max_age_days=7) == ["D"]

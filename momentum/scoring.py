@@ -81,6 +81,15 @@ def traditional_report(df, spec, n, lookback, k=2) -> dict:
         "signals": sig,
     }
 
+def stale_columns(df: pd.DataFrame, max_age_days: int) -> list:
+    asof = df.index.max()
+    stale = []
+    for col in df.columns:
+        s = df[col].dropna()
+        if s.empty or (asof - s.index[-1]).days > max_age_days:
+            stale.append(col)
+    return stale
+
 def render_score(report: dict, names: dict | None = None) -> str:
     names = names or {}
 
