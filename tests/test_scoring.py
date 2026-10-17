@@ -70,3 +70,19 @@ def test_regime_label_boundaries():
     assert scoring.regime_label(60) == "strongly risk-on"
     assert scoring.regime_label(-16.5) == "neutral"
     assert scoring.regime_label(float("nan")) == "unavailable"
+
+def test_component_signals_applies_each_spec_and_survives_a_missing_column():
+    df = pd.DataFrame({"US10": [4.00, 4.02, 3.99, 4.03, 4.00, 3.97],
+                       "SPX": [100, 110, 99, 108.9, 98.01, 107.811]})
+    spec = {
+        "rates":  {"col": "US10", "unit": "bp",  "up_is_good": False, "weight": 50},
+        "stocks": {"col": "SPX",  "unit": "pct", "up_is_good": True,  "weight": 30},
+        "dollar": {"col": "NOPE", "unit": "pct", "up_is_good": False, "weight": 20},
+    }
+
+    sig = scoring.component_signals(df, spec, n=1, lookback=4)
+
+    assert list(sig) == ["rates", "stocks", "dollar"]
+    assert sig["rates"] == pytest.approx(0.5)
+    assert sig["stocks"] == pytest.approx(0.5)
+    assert np.isnan(sig["dollar"])

@@ -48,3 +48,12 @@ def regime_label(score: float) -> str:
     if score < 60:
         return "constructive"
     return "strongly risk-on"
+
+def component_signals(df: pd.DataFrame, spec: dict, n: int, lookback: int) -> dict:
+    out = {}
+    for name, c in spec.items():
+        if c["col"] not in df.columns:
+            out[name] = np.nan
+            continue
+        out[name] = component_signal(df[c["col"]], n, c["unit"], c["up_is_good"], lookback)
+    return out
