@@ -7,7 +7,7 @@ from momentum.market import fetch_yf_closes
 UNITS = {
     "DGS10": "bp", "DGS2": "bp", "T10Y2Y": "bp", "DFII10": "bp", "T10YIE": "bp",
     "BAMLH0A0HYM2": "bp",
-    "VIXCLS": "pct", "SP500": "pct", "NASDAQCOM": "pct",
+    "VIX": "pct", "SP500": "pct", "NASDAQCOM": "pct",
     "DCOILWTICO": "pct", "DXY": "pct", "GOLD": "pct", "NDX": "pct",
 }
 WINDOWS = (1, 5, 20)
@@ -15,12 +15,12 @@ WINDOWS = (1, 5, 20)
 LABELS = {
     "DGS10": "US 10y yield", "DGS2": "US 2y yield", "T10Y2Y": "2s10s curve",
     "DFII10": "10y real yield", "T10YIE": "10y breakeven", "BAMLH0A0HYM2": "HY credit spread",
-    "VIXCLS": "VIX", "SP500": "S&P 500", "NASDAQCOM": "Nasdaq Composite",
+    "VIX": "VIX", "SP500": "S&P 500", "NASDAQCOM": "Nasdaq Composite",
     "DCOILWTICO": "WTI crude", "DXY": "US Dollar Index (DXY)", "GOLD": "Gold futures", "NDX": "Nasdaq 100",
 }
 TRADITIONAL_SPEC = {
     "equities":   {"col": "SP500",        "unit": "pct", "up_is_good": True,  "weight": 20},
-    "vix":        {"col": "VIXCLS",       "unit": "pct", "up_is_good": False, "weight": 15},
+    "vix":        {"col": "VIX",          "unit": "pct", "up_is_good": False, "weight": 15},
     "spreads":    {"col": "BAMLH0A0HYM2", "unit": "bp",  "up_is_good": False, "weight": 15},
     "dollar":     {"col": "DXY",          "unit": "pct", "up_is_good": False, "weight": 15},
     "real_yield": {"col": "DFII10",       "unit": "bp",  "up_is_good": False, "weight": 20},
@@ -32,7 +32,7 @@ SCORE_NAMES = {
 }
 
 MAX_AGE_DAYS = 3
-YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX"}
+YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX"}
 
 assert sum(c["weight"] for c in TRADITIONAL_SPEC.values()) == 100
 
@@ -48,7 +48,7 @@ def main() -> None:
     print(scoring.render_score(report, SCORE_NAMES))
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
-    print("Source: FRED (daily). DXY, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
+    print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
 
 if __name__ == "__main__":
     main()
