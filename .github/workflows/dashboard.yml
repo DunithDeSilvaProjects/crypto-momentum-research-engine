@@ -1,0 +1,46 @@
+name: dashboard
+
+on:
+  schedule:
+    - cron: "30 0 * * 2-6"   # 00:30 UTC = 06:00 Colombo, Tue-Sat (after each US weekday close)
+  workflow_dispatch:          # lets you run it by hand
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.lock
+      - name: Build the page
+        run: python -m scripts.morning_snapshot
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      - name: Encrypt the page
+        run: npx --yes staticrypt@3 site/index.html -p "$PAGE_PASSWORD" --short -d encrypted
+        env:
+          PAGE_PASSWORD: ${{ secrets.PAGE_PASSWORD }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: encrypted
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
