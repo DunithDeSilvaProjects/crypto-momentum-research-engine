@@ -33,3 +33,19 @@ def test_render_html_score_wraps_the_text_report_and_escapes():
     assert "<p>Pushing up:   Stocks &amp; bonds +10.0</p>" in out
     assert "<p>Pushing down: none</p>" in out
     assert out.endswith("</section>")
+
+
+def test_render_page_wraps_blocks_in_a_full_document():
+    page = report.render_page(
+        title="Morning Dashboard",
+        generated="2026-10-18 08:00 UTC",
+        blocks=["<p>A</p>", "<p>B</p>"],
+        notes=["Source: FRED & Yahoo"],
+    )
+
+    assert page.startswith("<!doctype html>")
+    assert "<title>Morning Dashboard</title>" in page
+    assert "Generated 2026-10-18 08:00 UTC" in page
+    assert page.index("<p>A</p>") < page.index("<p>B</p>")
+    assert "<li>Source: FRED &amp; Yahoo</li>" in page
+    assert 'name="viewport"' in page
