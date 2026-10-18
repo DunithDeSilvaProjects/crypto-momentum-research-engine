@@ -3,6 +3,7 @@ import html
 import pandas as pd
 
 from momentum.snapshot import format_change
+from momentum import scoring
 
 
 def render_html_table(table, units, windows=(1, 5, 20), stale_after=3, labels=None) -> str:
@@ -23,3 +24,9 @@ def render_html_table(table, units, windows=(1, 5, 20), stale_after=3, labels=No
         rows.append(f"<tr{cls}>{''.join(cells)}</tr>")
     return ("<table><thead><tr><th>Series</th><th>Last</th><th>As of</th>" + heads
             + "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>")
+
+def render_html_score(rep: dict, names: dict | None = None) -> str:
+    lines = scoring.render_score(rep, names).split("\n")
+    body = "".join(f"<p>{html.escape(line)}</p>" for line in lines)
+    label = html.escape(rep["label"], quote=True)
+    return f'<section class="regime" data-label="{label}">{body}</section>'

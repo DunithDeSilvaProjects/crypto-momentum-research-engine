@@ -19,3 +19,17 @@ def test_render_html_table_rows_labels_stale_and_dead():
     assert '<tr><td>US 10y yield</td><td>5.10</td><td>15 Oct</td><td>-9.0 bp</td></tr>' in out
     assert '<tr class="stale"><td>S&amp;P 500</td><td>7659.44</td><td>09 Oct</td><td>+0.13%</td></tr>' in out
     assert '<tr class="dead"><td>OLD</td><td colspan="3">unavailable</td></tr>' in out
+
+
+def test_render_html_score_wraps_the_text_report_and_escapes():
+    rep = {"score": -16.5, "label": "neutral", "coverage": 0.85,
+           "drivers": {"positive": [("equities", 10.0)], "negative": []}}
+    names = {"equities": "Stocks & bonds"}
+
+    out = report.render_html_score(rep, names)
+
+    assert out.startswith('<section class="regime" data-label="neutral">')
+    assert "<p>Traditional regime: -16.5 (neutral)  coverage 85%</p>" in out
+    assert "<p>Pushing up:   Stocks &amp; bonds +10.0</p>" in out
+    assert "<p>Pushing down: none</p>" in out
+    assert out.endswith("</section>")
