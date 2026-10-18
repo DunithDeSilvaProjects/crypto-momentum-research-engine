@@ -13,3 +13,5 @@ data_cache/
 
 # synthetic dry runs are not evidence
 forward_log_synthetic/
+
+site/

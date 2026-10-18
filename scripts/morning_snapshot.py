@@ -3,6 +3,10 @@ from momentum.macro import load_fred
 from momentum import scoring
 import pandas as pd
 from momentum.market import fetch_yf_closes
+from datetime import datetime, timezone
+from pathlib import Path
+
+from momentum import report as pagebuilder
 
 UNITS = {
     "DGS10": "bp", "DGS2": "bp", "T10Y2Y": "bp", "DFII10": "bp", "T10YIE": "bp",
@@ -33,6 +37,7 @@ SCORE_NAMES = {
 
 MAX_AGE_DAYS = 3
 YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX"}
+SITE_DIR = Path("site")
 
 assert sum(c["weight"] for c in TRADITIONAL_SPEC.values()) == 100
 
@@ -49,6 +54,21 @@ def main() -> None:
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
+    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    notes = ["Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed)."]
+    if stale:
+        notes.append("Excluded from the score as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
+    notes.append("Rules-based, descriptive score. Weights are not validated and it is not a forecast.")
+    page = pagebuilder.render_page(
+        "Morning Market Dashboard",
+        generated,
+        [pagebuilder.render_html_score(report, SCORE_NAMES),
+         pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS)],
+        notes,
+    )
+    SITE_DIR.mkdir(exist_ok=True)
+    (SITE_DIR / "index.html").write_text(page, encoding="utf-8")
+    print(f"Wrote {SITE_DIR / 'index.html'}")
 
 if __name__ == "__main__":
     main()
