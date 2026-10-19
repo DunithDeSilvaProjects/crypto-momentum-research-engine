@@ -2,12 +2,13 @@ from momentum import snapshot
 from momentum.macro import load_fred
 from momentum import scoring
 import pandas as pd
-from momentum.market import fetch_yf_closes
-from datetime import datetime, timezone
+from momentum.market import drop_incomplete, fetch_yf_closes, last_complete_session, render_asof
+
 from pathlib import Path
 
 from momentum import report as pagebuilder
 from momentum import regime
+
 
 UNITS = {
     "DGS10": "bp", "DGS2": "bp", "T10Y2Y": "bp", "DFII10": "bp", "T10YIE": "bp",
@@ -44,8 +45,12 @@ assert sum(c["weight"] for c in TRADITIONAL_SPEC.values()) == 100
 
 def main() -> None:
     fred = load_fred([k for k in UNITS if k not in YF_SYMBOLS], start="2025-01-01")
-    yf_closes = fetch_yf_closes(YF_SYMBOLS, start="2025-01-01")
+    now = pd.Timestamp.now(tz="UTC")
+    cutoff = last_complete_session(now)
+    yf_closes = drop_incomplete(fetch_yf_closes(YF_SYMBOLS, start="2025-01-01"), cutoff)
     df = pd.concat([fred, yf_closes], axis=1)
+    asof = render_asof(now, cutoff)
+    print(asof)
     table = snapshot.snapshot_table(df, UNITS, windows=WINDOWS)
     print(snapshot.render_text(table, UNITS, windows=WINDOWS, stale_after=3, labels=LABELS))
     stale = scoring.stale_columns(df, MAX_AGE_DAYS)
@@ -55,7 +60,7 @@ def main() -> None:
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    generated = now.strftime("%Y-%m-%d %H:%M UTC")
     
     yrep = regime.yield_regime_report(df.drop(columns=stale))
     print()
@@ -68,7 +73,8 @@ def main() -> None:
     page = pagebuilder.render_page(
         "Morning Market Dashboard",
         generated,
-        [pagebuilder.render_html_score(report, SCORE_NAMES),
+        [pagebuilder.render_html_asof(asof),
+         pagebuilder.render_html_score(report, SCORE_NAMES),
          pagebuilder.render_html_yield(yrep),
          pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS)],
         notes,
