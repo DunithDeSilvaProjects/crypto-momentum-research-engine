@@ -25,3 +25,14 @@ def test_fetch_yf_closes_raises_when_nothing_comes_back(monkeypatch):
 
     with pytest.raises(ValueError, match="no data"):
         market.fetch_yf_closes({"DXY": "DX-Y.NYB"}, start="2026-10-01")
+
+def test_last_complete_session_is_the_latest_closed_us_trading_day():
+    def last(utc):
+        return market.last_complete_session(pd.Timestamp(utc, tz="UTC"))
+
+    assert last("2026-10-19 16:55") == pd.Timestamp("2026-10-16")    # Mon, US market open
+    assert last("2026-10-20 00:30") == pd.Timestamp("2026-10-19")    # the daily workflow run
+    assert last("2026-10-19 07:00") == pd.Timestamp("2026-10-16")    # Mon, before the US open
+    assert last("2026-10-17 12:00") == pd.Timestamp("2026-10-16")    # Saturday
+    assert last("2026-10-16 22:00") == pd.Timestamp("2026-10-16")    # Fri, after the close
+    assert last("2026-10-18 23:00") == pd.Timestamp("2026-10-16")    # Sunday evening
