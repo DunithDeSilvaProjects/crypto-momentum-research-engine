@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from momentum import report as pagebuilder
+from momentum import regime
 
 UNITS = {
     "DGS10": "bp", "DGS2": "bp", "T10Y2Y": "bp", "DFII10": "bp", "T10YIE": "bp",
@@ -55,6 +56,11 @@ def main() -> None:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    
+    yrep = regime.yield_regime_report(df.drop(columns=stale))
+    print()
+    print(regime.render_yield_regime(yrep))
+    
     notes = ["Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed)."]
     if stale:
         notes.append("Excluded from the score as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
@@ -63,6 +69,7 @@ def main() -> None:
         "Morning Market Dashboard",
         generated,
         [pagebuilder.render_html_score(report, SCORE_NAMES),
+         pagebuilder.render_html_yield(yrep),
          pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS)],
         notes,
     )
