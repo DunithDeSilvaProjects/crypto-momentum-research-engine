@@ -49,3 +49,15 @@ def test_render_page_wraps_blocks_in_a_full_document():
     assert page.index("<p>A</p>") < page.index("<p>B</p>")
     assert "<li>Source: FRED &amp; Yahoo</li>" in page
     assert 'name="viewport"' in page
+
+def test_render_html_yield_wraps_the_two_lines_and_escapes():
+    rep = {"regime": "growth scare",
+           "changes": {"real_yield": -14.0, "breakeven": 0.0, "equities": -0.0195},
+           "directions": {"real_yield": -1, "breakeven": 0, "equities": -1}}
+
+    out = report.render_html_yield(rep)
+
+    assert out.startswith('<section class="regime yield" data-label="growth scare">')
+    assert "<p>Yield regime (draft rules, to be confirmed): growth scare</p>" in out
+    assert "<p>10y real yield -14.0 bp (down), 10y breakeven +0.0 bp (flat), S&amp;P 500 -1.95% (down)</p>" in out
+    assert out.endswith("</section>")

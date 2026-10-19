@@ -3,7 +3,7 @@ import html
 import pandas as pd
 
 from momentum.snapshot import format_change
-from momentum import scoring
+from momentum import scoring,regime
 
 CSS = """
 :root{--bg:#fff;--fg:#1a1d23;--muted:#6b7280;--line:#e5e7eb;--neg:#b42318;--pos:#067647;--neu:#475467;--warn:#b54708}
@@ -59,3 +59,9 @@ def render_page(title: str, generated: str, blocks: list, notes: list) -> str:
         + "".join(f"<div>{block}</div>" for block in blocks)
         + f'<ul class="notes">{notes_html}</ul></body></html>'
     )
+
+def render_html_yield(rep: dict) -> str:
+    lines = regime.render_yield_regime(rep).split("\n")
+    body = "".join(f"<p>{html.escape(line)}</p>" for line in lines)
+    label = html.escape(rep["regime"], quote=True)
+    return f'<section class="regime yield" data-label="{label}">{body}</section>'
