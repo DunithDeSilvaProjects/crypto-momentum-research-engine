@@ -29,7 +29,7 @@ def snapshot_table(df: pd.DataFrame, units: dict, windows=(1, 5, 20)) -> pd.Data
         row = {
             "last": s.iloc[-1],
             "last_date": s.index[-1],
-            "age_days": (asof - s.index[-1]).days,
+            "age_days": np.busday_count(s.index[-1].date(), asof.date()),
         }
         for n in windows:
             row[f"chg_{n}"] = obs_change(s, n, units[col])

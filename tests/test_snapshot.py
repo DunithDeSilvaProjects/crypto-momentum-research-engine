@@ -113,3 +113,21 @@ def test_render_text_shows_unavailable_for_a_dead_series():
     assert len(lines) == 2
     assert "unavailable" in lines[1]
     assert lines[1].startswith("DEAD")
+
+def test_snapshot_table_age_counts_business_days_across_a_weekend():
+    idx = pd.to_datetime(["2026-10-15", "2026-10-16", "2026-10-19"])
+    df = pd.DataFrame({"A": [100.0, 101.0, 102.0],      # last valid Mon 19 Oct
+                       "B": [200.0, 201.0, np.nan],     # last valid Fri 16 Oct
+                       "C": [300.0, np.nan, np.nan]},   # last valid Thu 15 Oct
+                      index=idx)
+    units = {"A": "pct", "B": "pct", "C": "pct"}
+
+    t = snapshot.snapshot_table(df, units, windows=(1,))
+
+    assert t.loc["A", "age_days"] == 0
+    assert t.loc["B", "age_days"] == 1
+    assert t.loc["C", "age_days"] == 2
+
+    lines = snapshot.render_text(t, units, windows=(1,), stale_after=1).splitlines()
+    assert "STALE" not in lines[1]
+    assert "STALE (2d old)" in lines[2]
