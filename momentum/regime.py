@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from momentum.snapshot import obs_change
 
 
 def direction(change: float, dead: float) -> float:
@@ -21,3 +22,23 @@ def yield_regime(real: float, breakeven: float, equities: float) -> str:
     if real < 0 and breakeven >= 0 and equities > 0:
         return "liquidity-positive"
     return "mixed"
+
+YIELD_INPUTS = {
+    "real_yield": ("DFII10", "bp"),
+    "breakeven": ("T10YIE", "bp"),
+    "equities": ("SP500", "pct"),
+}
+
+
+def yield_regime_report(df, n=5, dead_bp=2.0, dead_pct=0.005) -> dict:
+    changes, dirs = {}, {}
+    for name, (col, unit) in YIELD_INPUTS.items():
+        change = obs_change(df[col], n, unit) if col in df.columns else np.nan
+        dead = dead_bp if unit == "bp" else dead_pct
+        changes[name] = change
+        dirs[name] = direction(change, dead)
+    return {
+        "regime": yield_regime(dirs["real_yield"], dirs["breakeven"], dirs["equities"]),
+        "changes": changes,
+        "directions": dirs,
+    }
