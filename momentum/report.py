@@ -65,3 +65,7 @@ def render_html_yield(rep: dict) -> str:
     body = "".join(f"<p>{html.escape(line)}</p>" for line in lines)
     label = html.escape(rep["regime"], quote=True)
     return f'<section class="regime yield" data-label="{label}">{body}</section>'
+
+def render_html_asof(text: str) -> str:
+    body = "".join(f"<p>{html.escape(line)}</p>" for line in text.split("\n"))
+    return f'<section class="asof">{body}</section>'

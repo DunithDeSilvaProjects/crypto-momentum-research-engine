@@ -61,3 +61,12 @@ def test_render_html_yield_wraps_the_two_lines_and_escapes():
     assert "<p>Yield regime (draft rules, to be confirmed): growth scare</p>" in out
     assert "<p>10y real yield -14.0 bp (down), 10y breakeven +0.0 bp (flat), S&amp;P 500 -1.95% (down)</p>" in out
     assert out.endswith("</section>")
+
+def test_render_html_asof_makes_one_paragraph_per_line_in_an_asof_section():
+    text = "Generated: 20 Oct 00:34 UTC\nMarket data through: Mon 19 Oct 2026 & more"
+    out = report.render_html_asof(text)
+
+    assert out.startswith('<section class="asof">')
+    assert out.count("<p>") == 2
+    assert "<p>Generated: 20 Oct 00:34 UTC</p>" in out
+    assert "Mon 19 Oct 2026 &amp; more" in out                       # the ampersand must be escaped
