@@ -172,3 +172,18 @@ def test_stale_columns_flags_old_or_empty_series():
     assert scoring.stale_columns(df, max_age_days=3) == ["C", "D"]
     # age exactly equal to the limit is allowed
     assert scoring.stale_columns(df, max_age_days=7) == ["D"]
+
+
+def test_stale_columns_counts_business_days_so_a_weekend_is_not_staleness():
+    idx = pd.to_datetime(["2026-10-09", "2026-10-12", "2026-10-15", "2026-10-16", "2026-10-19"])
+    df = pd.DataFrame({
+        "A": [1, 2, 3, 4, 5],                          # last valid Mon 19 Oct, age 0
+        "B": [1, 2, 3, 4, np.nan],                     # last valid Fri 16 Oct, age 1
+        "C": [1, 2, 3, np.nan, np.nan],                # last valid Thu 15 Oct, age 2
+        "D": [1, np.nan, np.nan, np.nan, np.nan],      # last valid Fri 9 Oct, age 6
+        "E": [np.nan] * 5,                             # never valid
+    }, index=idx)
+
+    assert scoring.stale_columns(df, max_age_days=3) == ["D", "E"]
+    assert scoring.stale_columns(df, max_age_days=2) == ["D", "E"]      # C is exactly at the limit
+    assert scoring.stale_columns(df, max_age_days=1) == ["C", "D", "E"]

@@ -86,7 +86,7 @@ def stale_columns(df: pd.DataFrame, max_age_days: int) -> list:
     stale = []
     for col in df.columns:
         s = df[col].dropna()
-        if s.empty or (asof - s.index[-1]).days > max_age_days:
+        if s.empty or np.busday_count(s.index[-1].date(), asof.date()) > max_age_days:
             stale.append(col)
     return stale
 
