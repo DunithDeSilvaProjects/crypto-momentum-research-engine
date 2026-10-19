@@ -49,3 +49,17 @@ def test_drop_incomplete_removes_rows_after_the_cutoff_and_keeps_the_cutoff_day(
     assert out.shape == (3, 2)
     assert len(df) == 4                                          # the original is untouched
     assert market.drop_incomplete(df, pd.Timestamp("2026-10-13")).empty
+
+def test_render_asof_shows_generation_time_in_three_zones_and_the_cutoff():
+    now = pd.Timestamp("2026-10-20 00:34", tz="UTC")
+    lines = market.render_asof(now, pd.Timestamp("2026-10-19")).split("\n")
+
+    assert lines[0] == "Generated: 20 Oct 00:34 UTC · 20 Oct 08:34 Singapore/Hong Kong · 19 Oct 20:34 New York"
+    assert lines[1] == "Market data through last complete US session: Mon 19 Oct 2026 (close 16:00 ET)"
+
+
+def test_render_asof_new_york_time_follows_daylight_saving():
+    now = pd.Timestamp("2026-11-02 00:34", tz="UTC")
+    text = market.render_asof(now, pd.Timestamp("2026-10-30"))
+
+    assert "01 Nov 19:34 New York" in text

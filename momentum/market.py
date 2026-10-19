@@ -18,3 +18,11 @@ def last_complete_session(now: pd.Timestamp) -> pd.Timestamp:
 
 def drop_incomplete(df: pd.DataFrame, cutoff: pd.Timestamp) -> pd.DataFrame:
     return df[df.index <= cutoff]
+
+def render_asof(now: pd.Timestamp, cutoff: pd.Timestamp) -> str:
+    def at(zone: str) -> str:
+        return now.tz_convert(zone).strftime("%d %b %H:%M")
+
+    head = (f"Generated: {at('UTC')} UTC · {at('Asia/Singapore')} Singapore/Hong Kong"
+            f" · {at('America/New_York')} New York")
+    return head + "\n" + f"Market data through last complete US session: {cutoff:%a %d %b %Y} (close 16:00 ET)"
