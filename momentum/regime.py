@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from momentum.snapshot import obs_change
+from momentum.snapshot import format_change, obs_change
 
 
 def direction(change: float, dead: float) -> float:
@@ -42,3 +42,16 @@ def yield_regime_report(df, n=5, dead_bp=2.0, dead_pct=0.005) -> dict:
         "changes": changes,
         "directions": dirs,
     }
+
+_NAMES = {"real_yield": "10y real yield", "breakeven": "10y breakeven", "equities": "S&P 500"}
+_UNITS = {name: unit for name, (col, unit) in YIELD_INPUTS.items()}
+_WORDS = {1: "up", 0: "flat", -1: "down"}
+
+
+def render_yield_regime(rep: dict) -> str:
+    parts = []
+    for name, change in rep["changes"].items():
+        word = _WORDS.get(rep["directions"][name], "unknown")
+        parts.append(f"{_NAMES[name]} {format_change(change, _UNITS[name])} ({word})")
+    head = f"Yield regime (draft rules, to be confirmed): {rep['regime']}"
+    return head + "\n" + ", ".join(parts)

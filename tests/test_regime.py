@@ -51,3 +51,23 @@ def test_yield_regime_report_is_unavailable_when_an_input_is_missing():
 
     assert r["regime"] == "unavailable"
     assert np.isnan(r["changes"]["breakeven"])
+
+def test_render_yield_regime_prints_the_regime_and_each_input():
+    rep = {"regime": "growth scare",
+           "changes": {"real_yield": -14.0, "breakeven": 0.0, "equities": -0.0195},
+           "directions": {"real_yield": -1, "breakeven": 0, "equities": -1}}
+
+    lines = regime.render_yield_regime(rep).split("\n")
+
+    assert lines[0] == "Yield regime (draft rules, to be confirmed): growth scare"
+    assert lines[1] == "10y real yield -14.0 bp (down), 10y breakeven +0.0 bp (flat), S&P 500 -1.95% (down)"
+
+
+def test_render_yield_regime_marks_a_missing_input_as_unknown():
+    rep = {"regime": "unavailable",
+           "changes": {"real_yield": -14.0, "breakeven": np.nan, "equities": -0.0195},
+           "directions": {"real_yield": -1, "breakeven": np.nan, "equities": -1}}
+
+    text = regime.render_yield_regime(rep)
+
+    assert "10y breakeven n/a (unknown)" in text
