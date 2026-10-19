@@ -36,3 +36,16 @@ def test_last_complete_session_is_the_latest_closed_us_trading_day():
     assert last("2026-10-17 12:00") == pd.Timestamp("2026-10-16")    # Saturday
     assert last("2026-10-16 22:00") == pd.Timestamp("2026-10-16")    # Fri, after the close
     assert last("2026-10-18 23:00") == pd.Timestamp("2026-10-16")    # Sunday evening
+
+def test_drop_incomplete_removes_rows_after_the_cutoff_and_keeps_the_cutoff_day():
+    idx = pd.to_datetime(["2026-10-14", "2026-10-15", "2026-10-16", "2026-10-19"])
+    df = pd.DataFrame({"VIX": [19.0, 20.0, 20.5, 18.1],
+                       "GOLD": [4000.0, 4010.0, 4020.0, 4030.0]}, index=idx)
+
+    out = market.drop_incomplete(df, pd.Timestamp("2026-10-16"))
+
+    assert list(out.index) == [pd.Timestamp("2026-10-14"), pd.Timestamp("2026-10-15"), pd.Timestamp("2026-10-16")]
+    assert out["VIX"].iloc[-1] == 20.5
+    assert out.shape == (3, 2)
+    assert len(df) == 4                                          # the original is untouched
+    assert market.drop_incomplete(df, pd.Timestamp("2026-10-13")).empty

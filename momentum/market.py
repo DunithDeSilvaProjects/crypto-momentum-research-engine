@@ -15,4 +15,6 @@ def last_complete_session(now: pd.Timestamp) -> pd.Timestamp:
     ny = now.tz_convert("America/New_York")
     day = ny.date() if ny.hour >= 17 else ny.date() - pd.Timedelta(days=1) 
     return pd.Timestamp(np.busday_offset(day, 0, roll="backward"))
-    
+
+def drop_incomplete(df: pd.DataFrame, cutoff: pd.Timestamp) -> pd.DataFrame:
+    return df[df.index <= cutoff]
