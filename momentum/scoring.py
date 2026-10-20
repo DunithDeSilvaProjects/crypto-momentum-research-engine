@@ -49,6 +49,11 @@ def regime_label(score: float) -> str:
         return "constructive"
     return "strongly risk-on"
 
+def guarded_label(score: float, cov: float, min_coverage: float) -> str:
+    if cov < min_coverage:
+        return "insufficient data"
+    return regime_label(score)
+
 def component_signals(df: pd.DataFrame, spec: dict, n: int, lookback: int) -> dict:
     out = {}
     for name, c in spec.items():
