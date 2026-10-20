@@ -82,3 +82,5 @@ def test_fetch_yf_optional_returns_an_empty_table_and_a_note_when_the_fetch_fail
 
     assert out.empty
     assert note == "Yahoo Finance data unavailable today (RuntimeError)"
+    assert isinstance(out.index, pd.DatetimeIndex)
+    assert market.drop_incomplete(out, pd.Timestamp("2026-10-16")).empty    # must not raise
