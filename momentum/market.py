@@ -10,6 +10,11 @@ def fetch_yf_closes(symbols: dict, start: str) -> pd.DataFrame:
     closes = raw["Close"]
     return closes.rename(columns={ticker: name for name, ticker in symbols.items()})
 
+def fetch_yf_optional(symbols, start, fetch=fetch_yf_closes):
+    try:
+        return fetch(symbols, start=start), None
+    except Exception as exc:
+        return pd.DataFrame(), f"Yahoo Finance data unavailable today ({type(exc).__name__})"
 
 def last_complete_session(now: pd.Timestamp) -> pd.Timestamp:
     ny = now.tz_convert("America/New_York")

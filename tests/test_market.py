@@ -63,3 +63,22 @@ def test_render_asof_new_york_time_follows_daylight_saving():
     text = market.render_asof(now, pd.Timestamp("2026-10-30"))
 
     assert "01 Nov 19:34 New York" in text
+
+def test_fetch_yf_optional_returns_the_data_and_no_note_when_the_fetch_works():
+    good = pd.DataFrame({"VIX": [19.0]}, index=pd.to_datetime(["2026-10-16"]))
+
+    out, note = market.fetch_yf_optional({"VIX": "^VIX"}, "2025-01-01",
+                                         fetch=lambda symbols, start: good)
+
+    assert out is good
+    assert note is None
+
+
+def test_fetch_yf_optional_returns_an_empty_table_and_a_note_when_the_fetch_fails():
+    def broken(symbols, start):
+        raise RuntimeError("boom")
+
+    out, note = market.fetch_yf_optional({"VIX": "^VIX"}, "2025-01-01", fetch=broken)
+
+    assert out.empty
+    assert note == "Yahoo Finance data unavailable today (RuntimeError)"
