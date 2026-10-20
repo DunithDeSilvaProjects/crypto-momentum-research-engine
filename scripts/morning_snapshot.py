@@ -2,7 +2,7 @@ from momentum import snapshot
 from momentum.macro import load_fred
 from momentum import scoring
 import pandas as pd
-from momentum.market import drop_incomplete, fetch_yf_closes, last_complete_session, render_asof
+from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_session, render_asof
 
 from pathlib import Path
 
@@ -47,10 +47,13 @@ def main() -> None:
     fred = load_fred([k for k in UNITS if k not in YF_SYMBOLS], start="2025-01-01")
     now = pd.Timestamp.now(tz="UTC")
     cutoff = last_complete_session(now)
-    yf_closes = drop_incomplete(fetch_yf_closes(YF_SYMBOLS, start="2025-01-01"), cutoff)
+    yf_raw, yf_note = fetch_yf_optional(YF_SYMBOLS, "2025-01-01")
+    yf_closes = drop_incomplete(yf_raw, cutoff)
     df = pd.concat([fred, yf_closes], axis=1)
     asof = render_asof(now, cutoff)
     print(asof)
+    if yf_note:
+        print(yf_note)
     table = snapshot.snapshot_table(df, UNITS, windows=WINDOWS)
     print(snapshot.render_text(table, UNITS, windows=WINDOWS, stale_after=3, labels=LABELS))
     stale = scoring.stale_columns(df, MAX_AGE_DAYS)
@@ -67,6 +70,8 @@ def main() -> None:
     print(regime.render_yield_regime(yrep))
     
     notes = ["Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed)."]
+    if yf_note:
+        notes.append(yf_note)
     if stale:
         notes.append("Excluded from the score as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     notes.append("Rules-based, descriptive score. Weights are not validated and it is not a forecast.")
