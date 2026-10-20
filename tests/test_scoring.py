@@ -187,3 +187,9 @@ def test_stale_columns_counts_business_days_so_a_weekend_is_not_staleness():
     assert scoring.stale_columns(df, max_age_days=3) == ["D", "E"]
     assert scoring.stale_columns(df, max_age_days=2) == ["D", "E"]      # C is exactly at the limit
     assert scoring.stale_columns(df, max_age_days=1) == ["C", "D", "E"]
+
+def test_guarded_label_withholds_the_label_when_coverage_is_too_low():
+    assert scoring.guarded_label(-24.0, 1.0, 0.8) == "cautious"
+    assert scoring.guarded_label(-15.9, 0.7, 0.8) == "insufficient data"
+    assert scoring.guarded_label(-15.9, 0.8, 0.8) == "neutral"
+    assert scoring.guarded_label(np.nan, 1.0, 0.8) == "unavailable"
