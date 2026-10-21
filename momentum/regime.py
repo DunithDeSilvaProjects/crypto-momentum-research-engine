@@ -58,4 +58,8 @@ def render_yield_regime(rep: dict) -> str:
         word = _WORDS.get(rep["directions"][name], "unknown")
         parts.append(f"{_NAMES[name]} {format_change(change, _UNITS[name])} ({word})")
     head = f"Yield regime (draft rules, to be confirmed): {rep['regime']}"
-    return head + "\n" + ", ".join(parts)
+    body = ", ".join(parts)
+    asof = rep.get("asof")
+    if asof is not None and not pd.isna(asof):
+        body += f", as of {asof:%d %b}"
+    return head + "\n" + body

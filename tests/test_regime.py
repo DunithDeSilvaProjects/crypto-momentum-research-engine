@@ -86,3 +86,15 @@ def test_yield_regime_report_uses_the_latest_date_all_three_inputs_share():
     assert rep["changes"]["breakeven"] == pytest.approx(0.0)
     assert rep["changes"]["equities"] == pytest.approx(-0.0195)
     assert rep["regime"] == "growth scare"
+
+def test_render_yield_regime_states_the_shared_as_of_date():
+    rep = {"regime": "growth scare", "asof": pd.Timestamp("2026-10-16"),
+           "changes": {"real_yield": -14.0, "breakeven": 0.0, "equities": -0.0195},
+           "directions": {"real_yield": -1, "breakeven": 0, "equities": -1}}
+
+    lines = regime.render_yield_regime(rep).split("\n")
+    assert lines[1] == ("10y real yield -14.0 bp (down), 10y breakeven +0.0 bp (flat), "
+                        "S&P 500 -1.95% (down), as of 16 Oct")
+
+    rep["asof"] = pd.NaT
+    assert "as of" not in regime.render_yield_regime(rep)
