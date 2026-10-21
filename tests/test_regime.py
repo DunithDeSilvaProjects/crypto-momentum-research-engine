@@ -71,3 +71,18 @@ def test_render_yield_regime_marks_a_missing_input_as_unknown():
     text = regime.render_yield_regime(rep)
 
     assert "10y breakeven n/a (unknown)" in text
+
+def test_yield_regime_report_uses_the_latest_date_all_three_inputs_share():
+    idx = pd.bdate_range("2026-10-08", periods=8)      # 8, 9, 12, 13, 14, 15, 16, 19 Oct
+    df = pd.DataFrame({
+        "DFII10": [2.00, 2.00, 1.98, 1.96, 1.93, 1.90, 1.86, np.nan],
+        "T10YIE": [2.30, 2.30, 2.31, 2.29, 2.30, 2.31, 2.30, 2.34],
+        "SP500": [7000, 7000, 6990, 6950, 6900, 6880, 6863.5, 6990],
+    }, index=idx)
+
+    rep = regime.yield_regime_report(df)
+
+    assert rep["asof"] == pd.Timestamp("2026-10-16")
+    assert rep["changes"]["breakeven"] == pytest.approx(0.0)
+    assert rep["changes"]["equities"] == pytest.approx(-0.0195)
+    assert rep["regime"] == "growth scare"
