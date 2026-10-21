@@ -19,6 +19,7 @@ ENDPOINTS = {
     "coingecko global": "https://api.coingecko.com/api/v3/global",
     "coingecko top 20": "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1",
     "defillama stablecoin history": "https://stablecoins.llama.fi/stablecoincharts/all",
+        "okx liquidations": "https://www.okx.com/api/v5/public/liquidation-orders?instType=SWAP&uly=BTC-USDT&state=filled&limit=3",
 }
 
 
