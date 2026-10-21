@@ -7,7 +7,7 @@ from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_se
 from pathlib import Path
 
 from momentum import report as pagebuilder
-from momentum import regime
+from momentum import regime, rules
 
 
 UNITS = {
@@ -81,7 +81,8 @@ def main() -> None:
         [pagebuilder.render_html_asof(asof),
          pagebuilder.render_html_score(report, SCORE_NAMES),
          pagebuilder.render_html_yield(yrep),
-         pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS)],
+         pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS),
+         pagebuilder.render_html_rules(rules.RULES)],
         notes,
     )
     SITE_DIR.mkdir(exist_ok=True)
