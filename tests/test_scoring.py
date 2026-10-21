@@ -193,3 +193,19 @@ def test_guarded_label_withholds_the_label_when_coverage_is_too_low():
     assert scoring.guarded_label(-15.9, 0.7, 0.8) == "insufficient data"
     assert scoring.guarded_label(-15.9, 0.8, 0.8) == "neutral"
     assert scoring.guarded_label(np.nan, 1.0, 0.8) == "unavailable"
+
+def test_traditional_report_withholds_the_label_when_a_component_is_missing():
+    idx = pd.bdate_range("2026-06-01", periods=80)
+    t = np.arange(80)
+    df = pd.DataFrame({"A": 100 + t + 3 * np.sin(t)}, index=idx)
+    spec = {
+        "a": {"col": "A", "unit": "pct", "up_is_good": True, "weight": 60},
+        "b": {"col": "B", "unit": "pct", "up_is_good": True, "weight": 40},
+    }
+
+    low = scoring.traditional_report(df, spec, n=5, lookback=60)
+    ok = scoring.traditional_report(df, spec, n=5, lookback=60, min_coverage=0.5)
+
+    assert low["coverage"] == pytest.approx(0.6)
+    assert low["label"] == "insufficient data"
+    assert ok["label"] != "insufficient data"
