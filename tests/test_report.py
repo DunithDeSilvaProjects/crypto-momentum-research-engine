@@ -70,3 +70,16 @@ def test_render_html_asof_makes_one_paragraph_per_line_in_an_asof_section():
     assert out.count("<p>") == 2
     assert "<p>Generated: 20 Oct 00:34 UTC</p>" in out
     assert "Mon 19 Oct 2026 &amp; more" in out                       # the ampersand must be escaped
+
+
+def test_render_html_rules_makes_one_row_per_rule_with_its_status():
+    rules = [
+        {"area": "Window", "rule": "5-observation change", "status": "judgment"},
+        {"area": "Yield regime", "rule": "real & breakeven vs equities", "status": "convention"},
+    ]
+    out = report.render_html_rules(rules)
+
+    assert out.startswith('<details class="rules">')
+    assert out.count("<tr>") == 3                 # header row plus one per rule
+    assert 'data-status="judgment"' in out
+    assert "real &amp; breakeven" in out

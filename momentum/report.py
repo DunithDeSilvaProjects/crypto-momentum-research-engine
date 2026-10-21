@@ -69,3 +69,12 @@ def render_html_yield(rep: dict) -> str:
 def render_html_asof(text: str) -> str:
     body = "".join(f"<p>{html.escape(line)}</p>" for line in text.split("\n"))
     return f'<section class="asof">{body}</section>'
+
+def render_html_rules(rules: list) -> str:
+    head = "<tr><th>Area</th><th>Rule</th><th>Status</th></tr>"
+    rows = "".join(
+        f'<tr><td>{html.escape(r["area"])}</td><td>{html.escape(r["rule"])}</td>'
+        f'<td data-status="{html.escape(r["status"], quote=True)}">{html.escape(r["status"])}</td></tr>'
+        for r in rules
+    )
+    return f'<details class="rules"><summary>Rules and assumptions</summary><table>{head}{rows}</table></details>'
