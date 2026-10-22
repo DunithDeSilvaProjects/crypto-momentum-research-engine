@@ -1,6 +1,7 @@
 import pandas as pd
 
 from momentum import crypto
+import pytest
 
 
 def test_parse_klines_keeps_finished_days_and_drops_the_unfinished_one():
@@ -19,3 +20,38 @@ def test_parse_klines_keeps_finished_days_and_drops_the_unfinished_one():
     assert out["close"].tolist() == [105, 110]
     assert out["quote_volume"].iloc[-1] == 2200
     assert out.index.tz is None
+
+class FakeResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.payload
+
+
+def test_fetch_spot_klines_asks_the_public_data_host_for_daily_candles():
+    calls = []
+
+    def fake_get(url, params, timeout):
+        calls.append((url, params, timeout))
+        return FakeResponse([["row"]])
+
+    rows = crypto.fetch_spot_klines("BTCUSDT", limit=400, get=fake_get)
+
+    assert rows == [["row"]]
+    url, params, timeout = calls[0]
+    assert url == "https://data-api.binance.vision/api/v3/klines"
+    assert params == {"symbol": "BTCUSDT", "interval": "1d", "limit": 400}
+    assert timeout == 30
+
+
+def test_fetch_spot_klines_raises_when_the_server_refuses():
+    class Refused(FakeResponse):
+        def raise_for_status(self):
+            raise RuntimeError("451")
+
+    with pytest.raises(RuntimeError):
+        crypto.fetch_spot_klines("BTCUSDT", get=lambda url, params, timeout: Refused([]))
