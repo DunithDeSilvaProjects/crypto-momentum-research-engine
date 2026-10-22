@@ -54,7 +54,7 @@ def main() -> None:
     yf_closes = drop_incomplete(yf_raw, cutoff)
     spot_closes, _, spot_failed = crypto.load_spot_panel(DEFAULT_SYMBOLS, now)
     coin_rows = crypto.select_for_table(spot_closes, COIN_NAMES)
-    df = pd.concat([fred, yf_closes, coin_rows], axis=1)
+    df = pd.concat([fred, yf_closes, coin_rows], axis=1, sort=True)
     asof = render_asof(now, cutoff)
     print(asof)
     if yf_note:
