@@ -94,3 +94,14 @@ def test_load_spot_panel_with_every_coin_failing_returns_empty_date_indexed_tabl
     assert closes.empty and volumes.empty
     assert isinstance(closes.index, pd.DatetimeIndex)
     assert failed == ["AAA", "BBB"]
+
+def test_select_for_table_renames_the_wanted_coins_and_skips_missing_ones():
+    idx = pd.to_datetime(["2023-11-14", "2023-11-15"])
+    closes = pd.DataFrame({"BTCUSDT": [10.0, 11.0], "SOLUSDT": [1.0, 2.0],
+                           "ETHUSDT": [5.0, 6.0]}, index=idx)
+
+    out = crypto.select_for_table(closes, {"BTCUSDT": "BTC", "ETHUSDT": "ETH", "XRPUSDT": "XRP"})
+
+    assert list(out.columns) == ["BTC", "ETH"]
+    assert out["ETH"].tolist() == [5.0, 6.0]
+    assert "SOLUSDT" not in out.columns

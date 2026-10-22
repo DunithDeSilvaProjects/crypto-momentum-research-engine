@@ -36,3 +36,7 @@ def load_spot_panel(symbols, now, fetch=fetch_spot_klines):
         empty = pd.DataFrame(index=pd.DatetimeIndex([]))
         return empty, empty.copy(), failed
     return pd.DataFrame(closes), pd.DataFrame(volumes), failed
+
+def select_for_table(closes: pd.DataFrame, names: dict) -> pd.DataFrame:
+    wanted = [symbol for symbol in names if symbol in closes.columns]
+    return closes[wanted].rename(columns=names)
