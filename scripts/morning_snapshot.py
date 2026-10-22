@@ -3,11 +3,11 @@ from momentum.macro import load_fred
 from momentum import scoring
 import pandas as pd
 from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_session, render_asof
-
 from pathlib import Path
-
+from momentum.config import DEFAULT_SYMBOLS
 from momentum import report as pagebuilder
-from momentum import regime, rules
+from momentum import crypto, regime, rules
+
 
 
 UNITS = {
@@ -15,6 +15,7 @@ UNITS = {
     "BAMLH0A0HYM2": "bp",
     "VIX": "pct", "SP500": "pct", "NASDAQCOM": "pct",
     "DCOILWTICO": "pct", "DXY": "pct", "GOLD": "pct", "NDX": "pct",
+    "BTC": "pct", "ETH": "pct",
 }
 WINDOWS = (1, 5, 20)
 
@@ -23,6 +24,7 @@ LABELS = {
     "DFII10": "10y real yield", "T10YIE": "10y breakeven", "BAMLH0A0HYM2": "HY credit spread",
     "VIX": "VIX", "SP500": "S&P 500", "NASDAQCOM": "Nasdaq Composite",
     "DCOILWTICO": "WTI crude", "DXY": "US Dollar Index (DXY)", "GOLD": "Gold futures", "NDX": "Nasdaq 100",
+    "BTC": "Bitcoin (spot)", "ETH": "Ethereum (spot)",
 }
 TRADITIONAL_SPEC = {
     "equities":   {"col": "SP500",        "unit": "pct", "up_is_good": True,  "weight": 20},
@@ -39,21 +41,26 @@ SCORE_NAMES = {
 
 MAX_AGE_DAYS = 3
 YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX"}
+COIN_NAMES = {"BTCUSDT": "BTC", "ETHUSDT": "ETH"}
 SITE_DIR = Path("site")
 
 assert sum(c["weight"] for c in TRADITIONAL_SPEC.values()) == 100
 
 def main() -> None:
-    fred = load_fred([k for k in UNITS if k not in YF_SYMBOLS], start="2025-01-01")
+    fred = load_fred([k for k in UNITS if k not in YF_SYMBOLS and k not in COIN_NAMES.values()], start="2025-01-01")
     now = pd.Timestamp.now(tz="UTC")
     cutoff = last_complete_session(now)
     yf_raw, yf_note = fetch_yf_optional(YF_SYMBOLS, "2025-01-01")
     yf_closes = drop_incomplete(yf_raw, cutoff)
-    df = pd.concat([fred, yf_closes], axis=1)
+    spot_closes, _, spot_failed = crypto.load_spot_panel(DEFAULT_SYMBOLS, now)
+    coin_rows = crypto.select_for_table(spot_closes, COIN_NAMES)
+    df = pd.concat([fred, yf_closes, coin_rows], axis=1)
     asof = render_asof(now, cutoff)
     print(asof)
     if yf_note:
         print(yf_note)
+    if spot_failed:
+        print("Binance spot data unavailable for: " + ", ".join(spot_failed))
     table = snapshot.snapshot_table(df, UNITS, windows=WINDOWS)
     print(snapshot.render_text(table, UNITS, windows=WINDOWS, stale_after=3, labels=LABELS))
     stale = scoring.stale_columns(df, MAX_AGE_DAYS)
