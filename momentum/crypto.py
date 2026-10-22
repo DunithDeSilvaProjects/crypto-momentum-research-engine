@@ -21,3 +21,18 @@ def fetch_spot_klines(symbol: str, limit: int = 400, get=requests.get) -> list:
     r = get(url, params=params, timeout=30)
     r.raise_for_status()
     return r.json()
+
+def load_spot_panel(symbols, now, fetch=fetch_spot_klines):
+    closes, volumes, failed = {}, {}, []
+    for symbol in symbols:
+        try:
+            table = parse_klines(fetch(symbol), now)
+        except Exception:
+            failed.append(symbol)
+            continue
+        closes[symbol] = table["close"]
+        volumes[symbol] = table["quote_volume"]
+    if not closes:
+        empty = pd.DataFrame(index=pd.DatetimeIndex([]))
+        return empty, empty.copy(), failed
+    return pd.DataFrame(closes), pd.DataFrame(volumes), failed

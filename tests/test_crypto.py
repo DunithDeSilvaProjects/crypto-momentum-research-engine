@@ -55,3 +55,42 @@ def test_fetch_spot_klines_raises_when_the_server_refuses():
 
     with pytest.raises(RuntimeError):
         crypto.fetch_spot_klines("BTCUSDT", get=lambda url, params, timeout: Refused([]))
+
+NOW = pd.Timestamp("2023-11-16 12:00", tz="UTC")
+
+
+def kline_row(open_ms, close, quote_volume):
+    return [open_ms, "0", "0", "0", close, "0", open_ms + 86_399_999,
+            quote_volume, 0, "0", "0", "0"]
+
+
+def test_load_spot_panel_builds_aligned_tables_and_reports_the_coins_that_failed():
+    data = {
+        "AAA": [kline_row(1_699_920_000_000, "10", "100"),
+                kline_row(1_700_006_400_000, "11", "110")],
+        "CCC": [kline_row(1_699_920_000_000, "20", "200"),
+                kline_row(1_700_006_400_000, "22", "220")],
+    }
+
+    def fake_fetch(symbol):
+        if symbol == "BBB":
+            raise RuntimeError("451")
+        return data[symbol]
+
+    closes, volumes, failed = crypto.load_spot_panel(["AAA", "BBB", "CCC"], NOW, fetch=fake_fetch)
+
+    assert list(closes.columns) == ["AAA", "CCC"]
+    assert failed == ["BBB"]
+    assert closes.loc["2023-11-15", "CCC"] == 22
+    assert volumes["AAA"].tolist() == [100, 110]
+    assert closes.shape == (2, 2)
+
+def test_load_spot_panel_with_every_coin_failing_returns_empty_date_indexed_tables():
+    def broken(symbol):
+        raise RuntimeError("451")
+
+    closes, volumes, failed = crypto.load_spot_panel(["AAA", "BBB"], NOW, fetch=broken)
+
+    assert closes.empty and volumes.empty
+    assert isinstance(closes.index, pd.DatetimeIndex)
+    assert failed == ["AAA", "BBB"]
