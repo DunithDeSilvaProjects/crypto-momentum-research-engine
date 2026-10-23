@@ -1,5 +1,8 @@
 import pandas as pd
 import requests
+import numpy as np
+from momentum.config import SignalConfig
+from momentum.signals import combine_lookbacks, ewma_vol
 
 KLINE_COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
                  "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore"]
@@ -40,3 +43,9 @@ def load_spot_panel(symbols, now, fetch=fetch_spot_klines):
 def select_for_table(closes: pd.DataFrame, names: dict) -> pd.DataFrame:
     wanted = [symbol for symbol in names if symbol in closes.columns]
     return closes[wanted].rename(columns=names)
+
+def trend_signal(close: pd.Series, cfg: SignalConfig = SignalConfig()) -> float:
+    frame = close.to_frame("x")
+    vol = ewma_vol(frame.pct_change(), cfg.vol_halflife)
+    score = combine_lookbacks(frame, vol, cfg.lookbacks)["x"].iloc[-1]
+    return float(np.clip(score, -cfg.winsor, cfg.winsor) / cfg.winsor)

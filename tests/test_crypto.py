@@ -1,7 +1,8 @@
 import pandas as pd
-
+import numpy as np
 from momentum import crypto
 import pytest
+from momentum.config import SignalConfig
 
 
 def test_parse_klines_keeps_finished_days_and_drops_the_unfinished_one():
@@ -105,3 +106,16 @@ def test_select_for_table_renames_the_wanted_coins_and_skips_missing_ones():
     assert list(out.columns) == ["BTC", "ETH"]
     assert out["ETH"].tolist() == [5.0, 6.0]
     assert "SOLUSDT" not in out.columns
+
+def test_trend_signal_is_near_plus_one_for_a_steady_climb_clipped_for_a_fall_and_nan_when_flat():
+    cfg = SignalConfig(lookbacks=(4, 16))
+    days = np.arange(30)
+    up = pd.Series(100**1.01**days)
+    down = pd.Series(100**0.99**days)
+    flat = pd.Series([100.0] * 30)
+
+    assert crypto.trend_signal(up, cfg) == pytest.approx(1, abs=1e-4)
+    assert crypto.trend_signal(down, cfg) == pytest.approx(-0.9463286865779682)
+    assert np.isnan(crypto.trend_signal(flat, cfg))
+
+
