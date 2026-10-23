@@ -132,3 +132,18 @@ def test_breadth_signal_is_the_share_of_rising_coins_scaled_to_minus_one_plus_on
     assert crypto.breadth_signal(closes[["A", "B"]], cfg) == pytest.approx(1)
     assert np.isnan(crypto.breadth_signal(closes[["D"]], cfg))
 
+def test_volume_signal_follows_the_days_direction_scaled_by_how_heavy_the_volume_was():
+    quiet_volume = [100.0] * 24
+
+def sig(last_close, last_volume):
+    close = pd.Series([100.0] * 24 + [last_close])
+    volume = pd.Series(quiet_volume + [last_volume])
+    return crypto.volume_signal(close, volume)
+
+    assert sig(101.0, 200.0) == pytest.approx(0.6931)
+    assert sig(99.0, 200.0) == pytest.approx(-0.6931)
+    assert sig(101.0, 50.0) == pytest.approx(0)
+    assert sig(101.0, 1000.0) == pytest.approx(1)
+    assert sig(100.0, 200.0) == pytest.approx(0)
+    assert np.isnan(crypto.volume_signal(pd.Series([100.0] * 10), pd.Series([100.0] * 10)))
+

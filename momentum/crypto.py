@@ -56,3 +56,11 @@ def breadth_signal(closes: pd.DataFrame, cfg: SignalConfig = SignalConfig()) -> 
         return float("nan")
     share = (trends > 0).mean()
     return float(2 * share - 1)
+
+def volume_signal(close: pd.Series, volume: pd.Series, window: int = 20) -> float:
+    if len(close) < window + 2:
+        return float("nan")
+    base = volume.iloc[-(window):-1].mean()
+    intensity = float(np.clip(np.log(volume.iloc[-1] / base), 1, -1))
+    direction = np.sign(close.iloc[-1] - close.iloc[-1])
+    return float(direction * intensity)
