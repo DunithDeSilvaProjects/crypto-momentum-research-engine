@@ -49,3 +49,10 @@ def trend_signal(close: pd.Series, cfg: SignalConfig = SignalConfig()) -> float:
     vol = ewma_vol(frame.pct_change(), cfg.vol_halflife)
     score = combine_lookbacks(frame, vol, cfg.lookbacks)["x"].iloc[-1]
     return float(np.clip(score, -cfg.winsor, cfg.winsor) / cfg.winsor)
+
+def breadth_signal(closes: pd.DataFrame, cfg: SignalConfig = SignalConfig()) -> float:
+    trends = pd.Series({coin: trend_signal(closes[coin], cfg) for coin in closes.columns}).dropna()
+    if trends.empty:
+        return float("nan")
+    share = (trends > 0).mean()
+    return float(2 * share - 1)

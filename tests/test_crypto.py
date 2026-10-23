@@ -117,5 +117,18 @@ def test_trend_signal_is_near_plus_one_for_a_steady_climb_clipped_for_a_fall_and
     assert crypto.trend_signal(up, cfg) == pytest.approx(0.995033, abs=1e-4)
     assert crypto.trend_signal(down, cfg) == pytest.approx(-1.0)    
     assert np.isnan(crypto.trend_signal(flat, cfg))
+    
+def test_breadth_signal_is_the_share_of_rising_coins_scaled_to_minus_one_plus_one():
+    cfg = SignalConfig(lookbacks=(4, 16))
+    days = np.arange(30)
+    closes = pd.DataFrame({
+        "A": 100 * 1.01 ** days,
+        "B": 100 * 1.02 ** days,
+        "C": 100 * 0.99 ** days,
+        "D": 100.0,
+    })
 
+    assert crypto.breadth_signal(closes, cfg) == pytest.approx(1/3)
+    assert crypto.breadth_signal(closes[["A", "B"]], cfg) == pytest.approx(1)
+    assert np.isnan(crypto.breadth_signal(closes[["D"]], cfg))
 
