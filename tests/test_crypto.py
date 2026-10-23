@@ -153,3 +153,35 @@ def test_volume_signal_baseline_is_exactly_the_20_days_before_today():
 
     assert crypto.volume_signal(close, volume) == pytest.approx(np.log(240 /120 ))
 
+def okx_funding_payload():
+    rows = [
+        ("1792771200000", "0.0000685721961385"),
+        ("1792742400000", "0.0000753334163283"),
+        ("1792713600000", "0.0000668879046611"),
+        ("1792684800000", "0.0000781879787428"),
+    ]
+    data = [
+        {"instId": "BTC-USDT-SWAP", "fundingRate": rate, "realizedRate": rate, "fundingTime": ts}
+        for ts, rate in rows
+    ]
+    return {"code": "0", "msg": "", "data": data}
+
+
+def test_parse_funding_returns_rates_oldest_first_indexed_by_utc_time():
+    rates = crypto.parse_funding(okx_funding_payload())
+
+    assert list(rates.index) == [
+        #every 8 hours
+        pd.Timestamp("2026-10-22 16:00"),
+        pd.Timestamp("2026-10-23 00:00"),
+        pd.Timestamp("2026-10-23 08:00"),
+        pd.Timestamp("2026-10-23 16:00"),
+    ]
+    assert rates.iloc[0] == pytest.approx(0.0000781879787428)
+    assert rates.iloc[-1] == pytest.approx(0.0000685721961385)
+
+
+def test_parse_funding_raises_when_okx_reports_an_error():
+    with pytest.raises(ValueError):
+        crypto.parse_funding({"code": "51001", "msg": "Instrument ID does not exist", "data": []})
+

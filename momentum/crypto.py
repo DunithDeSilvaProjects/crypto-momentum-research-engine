@@ -64,3 +64,11 @@ def volume_signal(close: pd.Series, volume: pd.Series, window: int = 20) -> floa
     intensity = float(np.clip(np.log(volume.iloc[-1] / base), 0, 1))
     direction = np.sign(close.iloc[-1] - close.iloc[-2])
     return float(direction * intensity)
+
+def parse_funding(payload: dict) -> pd.Series:
+    if payload.get("code") != "0":
+        raise ValueError(f"OKX error {payload.get('code')}: {payload.get('msg')}")
+    rows = payload["data"]
+    times = pd.to_datetime([int(row["fundingTime"]) for row in rows], unit="ms")
+    rates = pd.Series([float(row["fundingRate"]) for row in rows], index=times)
+    return rates.sort_index()
