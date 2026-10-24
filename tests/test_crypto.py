@@ -185,3 +185,20 @@ def test_parse_funding_raises_when_okx_reports_an_error():
     with pytest.raises(ValueError):
         crypto.parse_funding({"code": "51001", "msg": "Instrument ID does not exist", "data": []})
 
+def test_daily_funding_sums_each_days_three_payments_and_drops_partial_days():
+    idx = pd.date_range("2026-10-20 00:00", periods=7, freq="8h")
+    rates = pd.Series([0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007], index=idx)
+
+    daily = crypto.daily_funding(rates)
+
+    assert list(daily.index) == [pd.Timestamp("2026-10-20"), pd.Timestamp("2026-10-21")]
+    assert daily.iloc[0] == pytest.approx(0.0006)
+    assert daily.iloc[1] == pytest.approx(0.0015)
+
+
+def test_daily_funding_on_the_real_okx_sample_keeps_only_the_complete_day():
+    daily = crypto.daily_funding(crypto.parse_funding(okx_funding_payload()))
+
+    assert len(daily) == 1
+    assert daily.index[0] == pd.Timestamp("2026-10-23")
+    assert daily.iloc[0] == pytest.approx(0.00021079, abs=1e-7)

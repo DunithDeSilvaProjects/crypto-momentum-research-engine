@@ -72,3 +72,9 @@ def parse_funding(payload: dict) -> pd.Series:
     times = pd.to_datetime([int(row["fundingTime"]) for row in rows], unit="ms")
     rates = pd.Series([float(row["fundingRate"]) for row in rows], index=times)
     return rates.sort_index()
+
+def daily_funding(rates: pd.Series, per_day: int = 3) -> pd.Series:
+    grouped = rates.groupby(rates.index.normalize())
+    total = grouped.sum()
+    count = grouped.count()
+    return total[count == per_day]
