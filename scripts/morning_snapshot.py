@@ -39,6 +39,13 @@ SCORE_NAMES = {
     "dollar": "Dollar (DXY)", "real_yield": "10y real yield", "curve": "10y-2y curve",
 }
 
+CRYPTO_NAMES = {
+    "trend": "BTC trend", "breadth": "Market breadth", "volume": "Spot volume",
+    "funding": "Funding (contrarian)", "open_interest": "Open interest",
+    "stablecoins": "Stablecoin supply",
+    "etf_flows": "ETF flows (no free source)", "liquidations": "Liquidations (no free source)",
+}
+
 MAX_AGE_DAYS = 3
 YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX"}
 COIN_NAMES = {"BTCUSDT": "BTC", "ETHUSDT": "ETH"}
@@ -52,7 +59,7 @@ def main() -> None:
     cutoff = last_complete_session(now)
     yf_raw, yf_note = fetch_yf_optional(YF_SYMBOLS, "2025-01-01")
     yf_closes = drop_incomplete(yf_raw, cutoff)
-    spot_closes, _, spot_failed = crypto.load_spot_panel(DEFAULT_SYMBOLS, now)
+    spot_closes, spot_volumes, spot_failed = crypto.load_spot_panel(DEFAULT_SYMBOLS, now)
     coin_rows = crypto.select_for_table(spot_closes, COIN_NAMES)
     df = pd.concat([fred, yf_closes, coin_rows], axis=1, sort=True)
     asof = render_asof(now, cutoff)
@@ -67,6 +74,15 @@ def main() -> None:
     report = scoring.traditional_report(df.drop(columns=stale), TRADITIONAL_SPEC, n=5, lookback=60)
     print()
     print(scoring.render_score(report, SCORE_NAMES))
+    derivs, deriv_notes = crypto.load_derivatives(now)
+    crypto_rep, crypto_note = crypto.attempt(
+        "Crypto score", lambda: crypto.crypto_report(spot_closes, spot_volumes, derivs)
+    )
+    if crypto_rep is not None:
+        print()
+        print(scoring.render_score(crypto_rep, CRYPTO_NAMES, "Crypto regime"))
+    for note in deriv_notes + ([crypto_note] if crypto_note else []):
+        print(note)
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
@@ -81,12 +97,21 @@ def main() -> None:
         notes.append(yf_note)
     if stale:
         notes.append("Excluded from the score as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
+    notes.append("Crypto: Binance spot (data-api.binance.vision), OKX perpetual swaps (funding, open interest), DefiLlama (stablecoin supply).")
+    notes.extend(deriv_notes)
+    if crypto_note:
+        notes.append(crypto_note)
     notes.append("Rules-based, descriptive score. Weights are not validated and it is not a forecast.")
+    crypto_blocks = (
+        [pagebuilder.render_html_score(crypto_rep, CRYPTO_NAMES, "Crypto regime")]
+        if crypto_rep is not None else []
+    )
     page = pagebuilder.render_page(
         "Morning Market Dashboard",
         generated,
         [pagebuilder.render_html_asof(asof),
          pagebuilder.render_html_score(report, SCORE_NAMES),
+         *crypto_blocks,
          pagebuilder.render_html_yield(yrep),
          pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS),
          pagebuilder.render_html_rules(rules.RULES)],
