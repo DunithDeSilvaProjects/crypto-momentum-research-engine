@@ -106,3 +106,9 @@ def parse_stablecoin_supply(rows: list) -> pd.Series:
     dates = pd.to_datetime([int(row["date"]) for row in rows], unit="s")
     values = [float(row["totalCirculatingUSD"]["peggedUSD"]) for row in rows]
     return pd.Series(values, index=dates).sort_index()
+
+def stablecoin_signal(supply: pd.Series, window: int = 7, scale: float = 0.01) -> float:
+    if len(supply) < window + 1:
+        return float("nan")
+    growth = supply.iloc[-1] / supply.iloc[-(window + 1)] - 1
+    return float(np.clip(growth / scale, -1, 1))

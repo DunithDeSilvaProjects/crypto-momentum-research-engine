@@ -267,3 +267,14 @@ def test_parse_stablecoin_supply_returns_usd_supply_by_date_oldest_first():
 
     assert list(supply.index) == [pd.Timestamp("2017-11-29"), pd.Timestamp("2017-11-30"), pd.Timestamp("2017-12-01")]
     assert list(supply.values) == [100, 200.0, 300]
+
+def test_stablecoin_signal_is_the_weekly_supply_growth_scaled_to_minus_one_plus_one():
+    def sig(last):
+        return crypto.stablecoin_signal(pd.Series([100.0] * 7 + [last]))
+
+    assert sig(100.5) == pytest.approx(0.5)
+    assert sig(101.0) == pytest.approx(1)
+    assert sig(103.0) == pytest.approx(1)
+    assert sig(99.5) == pytest.approx(-0.5)
+    assert sig(100.0) == pytest.approx(0)
+    assert np.isnan(crypto.stablecoin_signal(pd.Series([100.0] * 5)))
