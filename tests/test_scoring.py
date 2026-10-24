@@ -224,3 +224,19 @@ def test_report_from_signals_scores_labels_and_explains():
 
     strict = scoring.report_from_signals(sig, weights, k=2, min_coverage=0.9)
     assert strict["label"] == "insufficient data"
+
+
+def test_render_score_uses_the_given_title_and_defaults_to_traditional():
+    rep = {"score": 12.34, "label": "neutral", "coverage": 0.8,
+           "drivers": {"positive": [("trend", 17.8)], "negative": [("volume", -3.2)]}}
+    names = {"trend": "BTC trend", "volume": "Spot volume"}
+
+    crypto_text = scoring.render_score(rep, names, title="Crypto regime")
+    default_text = scoring.render_score(rep, names)
+
+    assert crypto_text.split("\n") == [
+        "Crypto regime: +12.3 (neutral)  coverage 80%",
+        "Pushing up:   BTC trend +17.8",
+        "Pushing down: Spot volume -3.2",
+    ]
+    assert default_text.split("\n")[0] == "Traditional regime: +12.3 (neutral)  coverage 80%"

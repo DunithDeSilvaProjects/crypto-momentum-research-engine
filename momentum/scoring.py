@@ -99,7 +99,7 @@ def stale_columns(df: pd.DataFrame, max_age_days: int) -> list:
             stale.append(col)
     return stale
 
-def render_score(report: dict, names: dict | None = None) -> str:
+def render_score(report: dict, names: dict | None = None, title: str = "Traditional regime") -> str:
     names = names or {}
 
     def fmt(items):
@@ -107,7 +107,7 @@ def render_score(report: dict, names: dict | None = None) -> str:
             return "none"
         return ", ".join(f"{names.get(key, key)} {value:+.1f}" for key, value in items)
 
-    head = (f"Traditional regime: {report['score']:+.1f} ({report['label']})"
+    head = (f"{title}: {report['score']:+.1f} ({report['label']})"
             f"  coverage {report['coverage']:.0%}")
     return "\n".join([
         head,

@@ -83,3 +83,13 @@ def test_render_html_rules_makes_one_row_per_rule_with_its_status():
     assert out.count("<tr>") == 3                 # header row plus one per rule
     assert 'data-status="judgment"' in out
     assert "real &amp; breakeven" in out
+
+
+def test_render_html_score_passes_the_title_through():
+    rep = {"score": 12.34, "label": "neutral", "coverage": 0.8,
+           "drivers": {"positive": [], "negative": []}}
+
+    page = report.render_html_score(rep, title="Crypto regime")
+
+    assert "Crypto regime: +12.3 (neutral)" in page
+    assert 'data-label="neutral"' in page

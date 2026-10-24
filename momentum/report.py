@@ -43,8 +43,8 @@ def render_html_table(table, units, windows=(1, 5, 20), stale_after=3, labels=No
     return ("<table><thead><tr><th>Series</th><th>Last</th><th>As of</th>" + heads
             + "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>")
 
-def render_html_score(rep: dict, names: dict | None = None) -> str:
-    lines = scoring.render_score(rep, names).split("\n")
+def render_html_score(rep: dict, names: dict | None = None, title: str = "Traditional regime") -> str:
+    lines = scoring.render_score(rep, names, title).split("\n")
     body = "".join(f"<p>{html.escape(line)}</p>" for line in lines)
     label = html.escape(rep["label"], quote=True)
     return f'<section class="regime" data-label="{label}">{body}</section>'
