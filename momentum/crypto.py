@@ -94,3 +94,10 @@ def funding_signal(daily: pd.Series, window: int = 3, base: float = 0.0003, scal
         return float("nan")
     excess = (daily.iloc[-window:].mean() - base) / scale
     return float(- np.clip(excess, -1, 1))
+
+def oi_signal(oi: pd.Series, close: pd.Series, window: int = 5, scale: float = 0.10) -> float:
+    if len(oi) < window + 1 or len(close) < window + 1:
+        return float("nan")
+    oi_change = oi.iloc[-1] / oi.iloc[-(window + 1)] - 1
+    direction = np.sign(close.iloc[-1] - close.iloc[-(window + 1)])
+    return float(direction * np.clip(oi_change / scale, 0, 1))

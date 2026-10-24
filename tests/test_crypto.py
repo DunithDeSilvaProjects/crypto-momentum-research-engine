@@ -240,3 +240,18 @@ def test_funding_signal_is_contrarian_around_the_base_rate():
     assert sig(-0.0003, -0.0003, -0.0003) == pytest.approx(1)
     assert sig(0.01, 0.0003, 0.0003, 0.0003) == pytest.approx(0)
     assert np.isnan(sig(0.0003, 0.0003))
+
+def test_oi_signal_needs_rising_open_interest_and_takes_the_price_direction():
+    def sig(oi_last, close_last):
+        oi = pd.Series([100.0] * 5 + [oi_last])
+        close = pd.Series([100.0] * 5 + [close_last])
+        return crypto.oi_signal(oi, close)
+
+    assert sig(110.0, 105.0) == pytest.approx(1)
+    assert sig(110.0, 95.0) == pytest.approx(-1)
+    assert sig(105.0, 105.0) == pytest.approx(0.5)
+    assert sig(105.0, 95.0) == pytest.approx(-0.5)
+    assert sig(95.0, 105.0) == pytest.approx(0)
+    assert sig(130.0, 105.0) == pytest.approx(1)
+    assert sig(110.0, 100.0) == pytest.approx(0)
+    assert np.isnan(crypto.oi_signal(pd.Series([100.0] * 3), pd.Series([100.0] * 3)))
