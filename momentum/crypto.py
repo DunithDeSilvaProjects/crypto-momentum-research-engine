@@ -101,3 +101,8 @@ def oi_signal(oi: pd.Series, close: pd.Series, window: int = 5, scale: float = 0
     oi_change = oi.iloc[-1] / oi.iloc[-(window + 1)] - 1
     direction = np.sign(close.iloc[-1] - close.iloc[-(window + 1)])
     return float(direction * np.clip(oi_change / scale, 0, 1))
+
+def parse_stablecoin_supply(rows: list) -> pd.Series:
+    dates = pd.to_datetime([int(row["date"]) for row in rows], unit="s")
+    values = [float(row["totalCirculatingUSD"]["peggedUSD"]) for row in rows]
+    return pd.Series(values, index=dates).sort_index()

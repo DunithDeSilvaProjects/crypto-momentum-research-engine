@@ -255,3 +255,15 @@ def test_oi_signal_needs_rising_open_interest_and_takes_the_price_direction():
     assert sig(130.0, 105.0) == pytest.approx(1)
     assert sig(110.0, 100.0) == pytest.approx(0)
     assert np.isnan(crypto.oi_signal(pd.Series([100.0] * 3), pd.Series([100.0] * 3)))
+
+def test_parse_stablecoin_supply_returns_usd_supply_by_date_oldest_first():
+    rows = [
+        {"date": "1512086400", "totalCirculatingUSD": {"peggedUSD": 300.0}},
+        {"date": "1511913600", "totalCirculatingUSD": {"peggedUSD": 100.0}},
+        {"date": "1512000000", "totalCirculatingUSD": {"peggedUSD": 200.0}},
+    ]
+
+    supply = crypto.parse_stablecoin_supply(rows)
+
+    assert list(supply.index) == [pd.Timestamp("2017-11-29"), pd.Timestamp("2017-11-30"), pd.Timestamp("2017-12-01")]
+    assert list(supply.values) == [100, 200.0, 300]
