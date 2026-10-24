@@ -3,6 +3,7 @@ import requests
 import numpy as np
 from momentum.config import SignalConfig
 from momentum.signals import combine_lookbacks, ewma_vol
+from momentum import scoring
 
 KLINE_COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
                  "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore"]
@@ -191,3 +192,12 @@ def crypto_signals(closes, volumes, derivs, cfg: SignalConfig = SignalConfig(), 
         "etf_flows": nan,
         "liquidations": nan,
     }
+
+
+CRYPTO_MIN_COVERAGE = 0.7
+
+
+def crypto_report(closes, volumes, derivs, cfg: SignalConfig = SignalConfig(), k: int = 2,
+                  min_coverage: float = CRYPTO_MIN_COVERAGE) -> dict:
+    signals = crypto_signals(closes, volumes, derivs, cfg)
+    return scoring.report_from_signals(signals,CRYPTO_WEIGHTS , k, min_coverage)

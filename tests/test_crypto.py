@@ -431,3 +431,23 @@ def test_crypto_signals_gathers_all_eight_and_marks_missing_sources_nan():
     assert sig["stablecoins"] == pytest.approx(1)
     assert np.isnan(sig["etf_flows"])
     assert np.isnan(sig["liquidations"])
+
+def test_crypto_report_scores_with_crypto_weights_and_its_own_coverage_floor():
+    days = np.arange(30)
+    closes = pd.DataFrame({"BTCUSDT": 100 * 1.01 ** days, "ETHUSDT": 100 * 0.99 ** days})
+    volumes = pd.DataFrame({"BTCUSDT": [100.0] * 30, "ETHUSDT": [100.0] * 30})
+    derivs = {
+        "funding": pd.Series([0.0003, 0.0003, 0.0003]),
+        "oi": None,
+        "stablecoins": pd.Series([100.0] * 7 + [101.0]),
+    }
+    cfg = SignalConfig(lookbacks=(4, 16))
+
+    rep = crypto.crypto_report(closes, volumes, derivs, cfg)
+
+    assert rep["score"] == pytest.approx(29.90, abs=1e-3)
+    assert rep["coverage"] == pytest.approx(0.70)
+    assert rep["label"] == "constructive"
+
+    strict = crypto.crypto_report(closes, volumes, derivs, cfg, min_coverage=0.8)
+    assert strict["label"] == "insufficient data"
