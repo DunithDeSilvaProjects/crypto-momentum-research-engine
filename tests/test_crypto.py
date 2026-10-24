@@ -451,3 +451,17 @@ def test_crypto_report_scores_with_crypto_weights_and_its_own_coverage_floor():
 
     strict = crypto.crypto_report(closes, volumes, derivs, cfg, min_coverage=0.8)
     assert strict["label"] == "insufficient data"
+
+
+def test_parse_stablecoin_supply_drops_todays_unfinished_row_when_now_is_given():
+    rows = [
+        {"date": "1511913600", "totalCirculatingUSD": {"peggedUSD": 100.0}},
+        {"date": "1512000000", "totalCirculatingUSD": {"peggedUSD": 200.0}},
+        {"date": "1512086400", "totalCirculatingUSD": {"peggedUSD": 300.0}},
+    ]
+    midday = pd.Timestamp("2017-12-01 12:00", tz="UTC")
+    next_day = pd.Timestamp("2017-12-02 00:00", tz="UTC")
+
+    assert len(crypto.parse_stablecoin_supply(rows, midday)) == 2
+    assert len(crypto.parse_stablecoin_supply(rows, next_day)) == 3
+    assert len(crypto.parse_stablecoin_supply(rows)) == 3

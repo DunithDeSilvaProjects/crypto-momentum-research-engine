@@ -103,10 +103,14 @@ def oi_signal(oi: pd.Series, close: pd.Series, window: int = 5, scale: float = 0
     direction = np.sign(close.iloc[-1] - close.iloc[-(window + 1)])
     return float(direction * np.clip(oi_change / scale, 0, 1))
 
-def parse_stablecoin_supply(rows: list) -> pd.Series:
+def parse_stablecoin_supply(rows: list, now: pd.Timestamp | None = None) -> pd.Series:
     dates = pd.to_datetime([int(row["date"]) for row in rows], unit="s")
     values = [float(row["totalCirculatingUSD"]["peggedUSD"]) for row in rows]
-    return pd.Series(values, index=dates).sort_index()
+    supply = pd.Series(values, index=dates).sort_index()
+    if now is None:
+        return supply
+    today = now.tz_convert("UTC").tz_localize(None).normalize()
+    return supply[supply.index < today]
 
 def stablecoin_signal(supply: pd.Series, window: int = 7, scale: float = 0.01) -> float:
     if len(supply) < window + 1:
@@ -162,7 +166,7 @@ def load_derivatives(
         "OKX funding", lambda: daily_funding(parse_funding(fetch_funding("BTC-USDT-SWAP")))
     )
     oi, oi_note = attempt("OKX open interest", lambda: parse_open_interest(fetch_oi("BTC"), now))
-    stable, stable_note = attempt("DefiLlama stablecoin", lambda: parse_stablecoin_supply(fetch_stable()))
+    stable, stable_note = attempt("DefiLlama stablecoin", lambda: parse_stablecoin_supply(fetch_stable(), now))
     notes = [note for note in (funding_note, oi_note, stable_note) if note is not None]
     return {"funding": funding, "oi": oi, "stablecoins": stable}, notes
 
