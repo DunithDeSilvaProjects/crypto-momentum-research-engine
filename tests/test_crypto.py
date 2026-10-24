@@ -202,3 +202,29 @@ def test_daily_funding_on_the_real_okx_sample_keeps_only_the_complete_day():
     assert len(daily) == 1
     assert daily.index[0] == pd.Timestamp("2026-10-23")
     assert daily.iloc[0] == pytest.approx(0.00021079, abs=1e-7)
+
+def okx_oi_payload():
+    return {"code": "0", "msg": "", "data": [
+        ["1792771200000", "3421280245.0902", "5066679909.1656"],
+        ["1792684800000", "3365594549.8082", "8295449131.0498"],
+        ["1792598400000", "3533971225.8776", "6849134918.3412"],
+        ["1792512000000", "3189769410.5172", "6876578377.2892"],
+    ]}
+
+
+def test_parse_open_interest_drops_the_unfinished_bar_and_returns_oldest_first():
+    morning = pd.Timestamp("2026-10-24 06:30", tz="UTC")
+    evening = pd.Timestamp("2026-10-24 17:00", tz="UTC")
+
+    oi = crypto.parse_open_interest(okx_oi_payload(), morning)
+    assert len(oi) == 3
+    assert oi.index[0] == pd.Timestamp("2026-10-20 16:00")
+    assert oi.iloc[0] == pytest.approx(3189769410.5172)
+    assert oi.iloc[-1] == pytest.approx(3365594549.8082)
+
+    assert len(crypto.parse_open_interest(okx_oi_payload(), evening)) == 4
+
+
+def test_parse_open_interest_raises_when_okx_reports_an_error():
+    with pytest.raises(ValueError):
+        crypto.parse_open_interest({"code": "51001", "msg": "bad request", "data": []}, pd.Timestamp.now(tz="UTC"))

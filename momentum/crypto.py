@@ -78,3 +78,13 @@ def daily_funding(rates: pd.Series, per_day: int = 3) -> pd.Series:
     total = grouped.sum()
     count = grouped.count()
     return total[count == per_day]
+
+def parse_open_interest(payload: dict, now: pd.Timestamp) -> pd.Series:
+    if payload.get("code") != "0":
+        raise ValueError(f"OKX error {payload.get('code')}: {payload.get('msg')}")
+    now_ms = now.value // 10**6
+    day_ms = 86_400_000
+    rows = [row for row in payload["data"] if int(row[0]) + day_ms <= now_ms]
+    times = pd.to_datetime([int(row[0]) for row in rows], unit="ms")
+    oi = pd.Series([float(row[1]) for row in rows], index=times)
+    return oi.sort_index()
