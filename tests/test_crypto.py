@@ -403,3 +403,31 @@ def test_load_derivatives_parses_each_source_and_survives_one_failing():
     assert data["oi"] is None
     assert len(data["funding"]) == 1
     assert notes == ["OKX open interest data unavailable today (ConnectionError)"]
+
+
+def test_crypto_weights_follow_the_brief_and_add_up_to_100():
+    assert sum(crypto.CRYPTO_WEIGHTS.values()) == 100
+    assert crypto.CRYPTO_WEIGHTS["trend"] == 20
+
+
+def test_crypto_signals_gathers_all_eight_and_marks_missing_sources_nan():
+    days = np.arange(30)
+    closes = pd.DataFrame({"BTCUSDT": 100 * 1.01 ** days, "ETHUSDT": 100 * 0.99 ** days})
+    volumes = pd.DataFrame({"BTCUSDT": [100.0] * 30, "ETHUSDT": [100.0] * 30})
+    derivs = {
+        "funding": pd.Series([0.0003, 0.0003, 0.0003]),
+        "oi": None,
+        "stablecoins": pd.Series([100.0] * 7 + [101.0]),
+    }
+
+    sig = crypto.crypto_signals(closes, volumes, derivs, SignalConfig(lookbacks=(4, 16)))
+
+    assert list(sig) == list(crypto.CRYPTO_WEIGHTS)
+    assert sig["trend"] == pytest.approx(0.995033, abs=1e-4)
+    assert sig["breadth"] == pytest.approx(0)
+    assert sig["volume"] == pytest.approx(0)
+    assert sig["funding"] == pytest.approx(0)
+    assert np.isnan(sig["open_interest"])
+    assert sig["stablecoins"] == pytest.approx(1)
+    assert np.isnan(sig["etf_flows"])
+    assert np.isnan(sig["liquidations"])

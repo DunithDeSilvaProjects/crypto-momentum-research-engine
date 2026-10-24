@@ -164,3 +164,30 @@ def load_derivatives(
     stable, stable_note = attempt("DefiLlama stablecoin", lambda: parse_stablecoin_supply(fetch_stable()))
     notes = [note for note in (funding_note, oi_note, stable_note) if note is not None]
     return {"funding": funding, "oi": oi, "stablecoins": stable}, notes
+
+
+CRYPTO_WEIGHTS = {
+    "trend": 20,
+    "breadth": 15,
+    "volume": 15,
+    "funding": 10,
+    "open_interest": 10,
+    "stablecoins": 10,
+    "etf_flows": 10,
+    "liquidations": 10,
+}
+
+
+def crypto_signals(closes, volumes, derivs, cfg: SignalConfig = SignalConfig(), coin: str = "BTCUSDT") -> dict:
+    nan = float("nan")
+    funding, oi, stable = derivs["funding"], derivs["oi"], derivs["stablecoins"]
+    return {
+        "trend": trend_signal(closes[coin], cfg),
+        "breadth": breadth_signal(closes, cfg),
+        "volume": volume_signal(closes[coin], volumes[coin]),
+        "funding": nan if funding is None else funding_signal(funding),
+        "open_interest": nan if oi is None else oi_signal(oi, closes[coin]),
+        "stablecoins": nan if stable is None else stablecoin_signal(stable),
+        "etf_flows": nan,
+        "liquidations": nan,
+    }
