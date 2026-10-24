@@ -228,3 +228,15 @@ def test_parse_open_interest_drops_the_unfinished_bar_and_returns_oldest_first()
 def test_parse_open_interest_raises_when_okx_reports_an_error():
     with pytest.raises(ValueError):
         crypto.parse_open_interest({"code": "51001", "msg": "bad request", "data": []}, pd.Timestamp.now(tz="UTC"))
+
+def test_funding_signal_is_contrarian_around_the_base_rate():
+    def sig(*daily):
+        return crypto.funding_signal(pd.Series(daily))
+
+    assert sig(0.0003, 0.0006, 0.0009) == pytest.approx(-0.5)
+    assert sig(0.0003, 0.0003, 0.0003) == pytest.approx(0)
+    assert sig(0.0009, 0.0009, 0.0009) == pytest.approx(-1)
+    assert sig(0.0020, 0.0020, 0.0020) == pytest.approx(-1)
+    assert sig(-0.0003, -0.0003, -0.0003) == pytest.approx(1)
+    assert sig(0.01, 0.0003, 0.0003, 0.0003) == pytest.approx(0)
+    assert np.isnan(sig(0.0003, 0.0003))

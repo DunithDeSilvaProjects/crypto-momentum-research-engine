@@ -88,3 +88,9 @@ def parse_open_interest(payload: dict, now: pd.Timestamp) -> pd.Series:
     times = pd.to_datetime([int(row[0]) for row in rows], unit="ms")
     oi = pd.Series([float(row[1]) for row in rows], index=times)
     return oi.sort_index()
+
+def funding_signal(daily: pd.Series, window: int = 3, base: float = 0.0003, scale: float = 0.0006) -> float:
+    if len(daily) < window:
+        return float("nan")
+    excess = (daily.iloc[-window:].mean() - base) / scale
+    return float(- np.clip(excess, -1, 1))
