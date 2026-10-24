@@ -209,3 +209,18 @@ def test_traditional_report_withholds_the_label_when_a_component_is_missing():
     assert low["coverage"] == pytest.approx(0.6)
     assert low["label"] == "insufficient data"
     assert ok["label"] != "insufficient data"
+
+
+def test_report_from_signals_scores_labels_and_explains():
+    sig = {"a": 0.5, "b": -1.0, "c": np.nan}
+    weights = {"a": 50, "b": 30, "c": 20}
+
+    rep = scoring.report_from_signals(sig, weights, k=2, min_coverage=0.8)
+
+    assert rep["score"] == pytest.approx(-5)
+    assert rep["coverage"] == pytest.approx(0.8)
+    assert rep["label"] == "neutral"
+    assert rep["drivers"] == {"positive": [("a", 25.0)], "negative": [("b", -30.0)]}
+
+    strict = scoring.report_from_signals(sig, weights, k=2, min_coverage=0.9)
+    assert strict["label"] == "insufficient data"

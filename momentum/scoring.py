@@ -73,19 +73,22 @@ def top_drivers(contribs: pd.Series, k: int = 2) -> dict:
     neg = contribs[contribs < 0].sort_values().head(k)
     return {"positive": list(pos.items()), "negative": list(neg.items())}
 
-def traditional_report(df, spec, n, lookback, k=2, min_coverage=0.8) -> dict:
-    sig = component_signals(df, spec, n, lookback)
-    weights = {name: c["weight"] for name, c in spec.items()}
-    contribs = contributions(sig, weights)
+def report_from_signals(signals: dict, weights: dict, k: int = 2, min_coverage: float = 0.8) -> dict:
+    contribs = contributions(signals, weights)
     score = contribs.sum()
-    cov = coverage(sig, weights)
+    cov = coverage(signals, weights)
     return {
         "score": score,
         "coverage": cov,
         "label": guarded_label(score, cov, min_coverage),
         "drivers": top_drivers(contribs, k),
-        "signals": sig,
+        "signals": signals,
     }
+
+def traditional_report(df, spec, n, lookback, k=2, min_coverage=0.8) -> dict:
+    sig = component_signals(df, spec, n, lookback)
+    weights = {name: c["weight"] for name, c in spec.items()}
+    return report_from_signals(sig, weights, k, min_coverage)
 
 def stale_columns(df: pd.DataFrame, max_age_days: int) -> list:
     asof = df.index.max()
