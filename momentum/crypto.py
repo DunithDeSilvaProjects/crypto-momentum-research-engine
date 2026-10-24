@@ -143,3 +143,9 @@ def fetch_stablecoins(get=requests.get) -> list:
     response = get(LLAMA_STABLECOINS_URL, timeout=30)
     response.raise_for_status()
     return response.json()
+
+def attempt(label: str, load):
+    try:
+        return load(), None
+    except Exception as exc:
+        return None, f"{label} data unavailable today ({type(exc).__name__})"

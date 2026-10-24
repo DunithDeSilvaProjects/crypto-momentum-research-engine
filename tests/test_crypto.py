@@ -359,3 +359,16 @@ def test_fetch_stablecoins_raises_when_the_http_request_is_refused():
 
     with pytest.raises(requests.HTTPError):
         crypto.fetch_stablecoins(get=refused)
+
+
+def test_attempt_returns_the_value_when_loading_works_and_a_note_when_it_fails():
+    value, note = crypto.attempt("OKX funding", lambda: 42)
+    assert value == 42
+    assert note is None
+
+    def broken():
+        raise requests.ConnectionError("down")
+
+    value, note = crypto.attempt("OKX funding", broken)
+    assert value is None
+    assert note == "OKX funding data unavailable today (ConnectionError)"
