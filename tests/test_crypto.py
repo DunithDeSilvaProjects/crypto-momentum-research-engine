@@ -372,3 +372,34 @@ def test_attempt_returns_the_value_when_loading_works_and_a_note_when_it_fails()
     value, note = crypto.attempt("OKX funding", broken)
     assert value is None
     assert note == "OKX funding data unavailable today (ConnectionError)"
+
+def test_load_derivatives_parses_each_source_and_survives_one_failing():
+    now = pd.Timestamp("2026-10-24 06:30", tz="UTC")
+    rows = [
+        {"date": "1511913600", "totalCirculatingUSD": {"peggedUSD": 100.0}},
+        {"date": "1512000000", "totalCirculatingUSD": {"peggedUSD": 200.0}},
+    ]
+
+    def down(ccy):
+        raise requests.ConnectionError("down")
+
+    data, notes = crypto.load_derivatives(
+        now,
+        fetch_funding=lambda inst_id: okx_funding_payload(),
+        fetch_oi=lambda ccy: okx_oi_payload(),
+        fetch_stable=lambda: rows,
+    )
+    assert len(data["funding"]) == 1
+    assert len(data["oi"]) == 3
+    assert len(data["stablecoins"]) == 2
+    assert notes == []
+
+    data, notes = crypto.load_derivatives(
+        now,
+        fetch_funding=lambda inst_id: okx_funding_payload(),
+        fetch_oi=down,
+        fetch_stable=lambda: rows,
+    )
+    assert data["oi"] is None
+    assert len(data["funding"]) == 1
+    assert notes == ["OKX open interest data unavailable today (ConnectionError)"]

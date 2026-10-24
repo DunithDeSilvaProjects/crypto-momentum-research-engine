@@ -149,3 +149,18 @@ def attempt(label: str, load):
         return load(), None
     except Exception as exc:
         return None, f"{label} data unavailable today ({type(exc).__name__})"
+
+
+def load_derivatives(
+    now: pd.Timestamp,
+    fetch_funding=fetch_okx_funding,
+    fetch_oi=fetch_okx_open_interest,
+    fetch_stable=fetch_stablecoins,
+):
+    funding, funding_note = attempt(
+        "OKX funding", lambda: daily_funding(parse_funding(fetch_funding("BTC-USDT-SWAP")))
+    )
+    oi, oi_note = attempt("OKX open interest", lambda: parse_open_interest(fetch_oi("BTC"), now))
+    stable, stable_note = attempt("DefiLlama stablecoin", lambda: parse_stablecoin_supply(fetch_stable()))
+    notes = [note for note in (funding_note, oi_note, stable_note) if note is not None]
+    return {"funding": funding, "oi": oi, "stablecoins": stable}, notes
