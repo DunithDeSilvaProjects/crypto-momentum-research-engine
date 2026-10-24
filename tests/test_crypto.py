@@ -314,3 +314,48 @@ def test_fetch_okx_funding_raises_when_the_http_request_is_refused():
 
     with pytest.raises(requests.HTTPError):
         crypto.fetch_okx_funding("BTC-USDT-SWAP", get=refused)
+
+
+def test_fetch_okx_open_interest_asks_for_daily_history_and_returns_the_json():
+    seen = {}
+
+    def fake_get(url, params=None, timeout=None):
+        seen.update(url=url, params=params, timeout=timeout)
+        return OkxReply({"code": "0", "data": []})
+
+    payload = crypto.fetch_okx_open_interest("BTC", get=fake_get)
+
+    assert seen["url"] == "https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-volume"
+    assert seen["params"] == {"ccy": "BTC", "period": "1D"}
+    assert seen["timeout"] == 30
+    assert payload == {"code": "0", "data": []}
+
+
+def test_fetch_okx_open_interest_raises_when_the_http_request_is_refused():
+    def refused(url, params=None, timeout=None):
+        return OkxReply({}, fail=True)
+
+    with pytest.raises(requests.HTTPError):
+        crypto.fetch_okx_open_interest("BTC", get=refused)
+
+def test_fetch_stablecoins_asks_defillama_for_the_full_history_and_returns_the_json():
+    seen = {}
+
+    def fake_get(url, params=None, timeout=None):
+        seen.update(url=url, params=params, timeout=timeout)
+        return OkxReply([])
+
+    rows = crypto.fetch_stablecoins(get=fake_get)
+
+    assert seen["url"] == "https://stablecoins.llama.fi/stablecoincharts/all"
+    assert seen["params"] is None
+    assert seen["timeout"] == 30
+    assert rows == []
+
+
+def test_fetch_stablecoins_raises_when_the_http_request_is_refused():
+    def refused(url, params=None, timeout=None):
+        return OkxReply([], fail=True)
+
+    with pytest.raises(requests.HTTPError):
+        crypto.fetch_stablecoins(get=refused)

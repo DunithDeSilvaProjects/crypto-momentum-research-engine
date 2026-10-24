@@ -125,3 +125,21 @@ def fetch_okx_funding(inst_id: str, limit: int = 100, get=requests.get) -> dict:
     )
     response.raise_for_status()
     return response.json()
+
+def fetch_okx_open_interest(ccy="BTC", get=requests.get):
+    response = get(
+        f"{OKX_BASE}/api/v5/rubik/stat/contracts/open-interest-volume",
+        params={"ccy": ccy, "period": "1D"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+LLAMA_STABLECOINS_URL = "https://stablecoins.llama.fi/stablecoincharts/all"
+
+
+def fetch_stablecoins(get=requests.get) -> list:
+    response = get(LLAMA_STABLECOINS_URL, timeout=30)
+    response.raise_for_status()
+    return response.json()
