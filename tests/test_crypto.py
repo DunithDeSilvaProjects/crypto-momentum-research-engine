@@ -3,6 +3,7 @@ import numpy as np
 from momentum import crypto
 import pytest
 from momentum.config import SignalConfig
+import requests
 
 
 def test_parse_klines_keeps_finished_days_and_drops_the_unfinished_one():
@@ -278,3 +279,38 @@ def test_stablecoin_signal_is_the_weekly_supply_growth_scaled_to_minus_one_plus_
     assert sig(99.5) == pytest.approx(-0.5)
     assert sig(100.0) == pytest.approx(0)
     assert np.isnan(crypto.stablecoin_signal(pd.Series([100.0] * 5)))
+
+class OkxReply:
+    def __init__(self, payload, fail=False):
+        self.payload = payload
+        self.fail = fail
+
+    def raise_for_status(self):
+        if self.fail:
+            raise requests.HTTPError("403 Forbidden")
+
+    def json(self):
+        return self.payload
+
+
+def test_fetch_okx_funding_asks_for_the_swap_and_returns_the_json():
+    seen = {}
+
+    def fake_get(url, params=None, timeout=None):
+        seen.update(url=url, params=params, timeout=timeout)
+        return OkxReply({"code": "0", "data": []})
+
+    payload = crypto.fetch_okx_funding("BTC-USDT-SWAP", limit=30, get=fake_get)
+
+    assert seen["url"] == "https://www.okx.com/api/v5/public/funding-rate-history"
+    assert seen["params"] == {"instId": "BTC-USDT-SWAP", "limit": 30}
+    assert seen["timeout"] == 30
+    assert payload == {"code": "0", "data": []}
+
+
+def test_fetch_okx_funding_raises_when_the_http_request_is_refused():
+    def refused(url, params=None, timeout=None):
+        return OkxReply({}, fail=True)
+
+    with pytest.raises(requests.HTTPError):
+        crypto.fetch_okx_funding("BTC-USDT-SWAP", get=refused)

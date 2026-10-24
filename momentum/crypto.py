@@ -112,3 +112,16 @@ def stablecoin_signal(supply: pd.Series, window: int = 7, scale: float = 0.01) -
         return float("nan")
     growth = supply.iloc[-1] / supply.iloc[-(window + 1)] - 1
     return float(np.clip(growth / scale, -1, 1))
+
+
+OKX_BASE = "https://www.okx.com"
+
+
+def fetch_okx_funding(inst_id: str, limit: int = 100, get=requests.get) -> dict:
+    response = get(
+        f"{OKX_BASE}/api/v5/public/funding-rate-history",
+        params={"instId": inst_id, "limit": limit},
+        timeout=limit,
+    )
+    response.raise_for_status()
+    return response.json()
