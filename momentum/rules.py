@@ -1,3 +1,5 @@
+from momentum.config import DEFAULT_SYMBOLS, SignalConfig
+from momentum.crypto import CRYPTO_MIN_COVERAGE, CRYPTO_WEIGHTS
 STATUSES = ("convention", "judgment", "proxy")
 
 RULES = [
@@ -35,3 +37,42 @@ RULES = [
      "rule": "Not included yet. Planned free proxy: equal-weight versus cap-weight S&P 500.",
      "status": "proxy"},
 ]
+
+
+def crypto_rules() -> list:
+    cfg = SignalConfig()
+    weights = ", ".join(f"{name.replace('_', ' ')} {weight}" for name, weight in CRYPTO_WEIGHTS.items())
+    lookbacks = ", ".join(str(n) for n in cfg.lookbacks)
+    return [
+        {"area": "Crypto components",
+         "rule": (f"Eight components, weights from the brief: {weights}. ETF flows and liquidations have "
+                  "no free source, so they are shown as not scored and coverage cannot exceed 80%."),
+         "status": "convention"},
+        {"area": "Crypto minimum coverage",
+         "rule": (f"No label below {CRYPTO_MIN_COVERAGE:.0%} coverage. Lower than the traditional 80% because "
+                  "20% of the weight is permanently unavailable: one further failed 10-point component still "
+                  "gives a label, two do not."),
+         "status": "judgment"},
+        {"area": "Crypto windows",
+         "rule": (f"Calendar days (crypto trades every day), not trading days. Trend: average of the {lookbacks}-day "
+                  f"volatility-scaled momentum of Bitcoin, capped at +/-{cfg.winsor:g} and scaled to +/-1. "
+                  f"Breadth: share of the {len(DEFAULT_SYMBOLS)} coins with positive trend, scaled to +/-1. "
+                  "Volume: latest day against the previous 20, signed by the day's price direction, floored at zero."),
+         "status": "judgment"},
+        {"area": "Crypto derivatives",
+         "rule": ("Funding: contrarian, average of the last 3 complete days against a base of 0.03% a day; "
+                  "0.06% above it is full strength. Open interest: 5-day change (+10% is full strength) "
+                  "signed by the 5-day price direction; falling open interest scores zero. "
+                  "Stablecoin supply: 7-day change, +/-1% is full strength."),
+         "status": "judgment"},
+        {"area": "Crypto data",
+         "rule": ("Prices and volume: Binance spot daily candles (UTC days), unfinished day dropped. Funding and "
+                  "open interest: OKX BTC-USDT perpetual swap; its daily open-interest bars run on a UTC+8 day, "
+                  "so they are 8 hours offset from the spot candles. Stablecoin supply: DefiLlama, complete UTC "
+                  "days only. The research engine uses Binance perpetual candles; the dashboard uses spot "
+                  "because Binance futures block GitHub's servers."),
+         "status": "proxy"},
+    ]
+
+
+RULES = RULES + crypto_rules()
