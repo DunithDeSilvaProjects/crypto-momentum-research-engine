@@ -240,3 +240,18 @@ def test_render_score_uses_the_given_title_and_defaults_to_traditional():
         "Pushing down: Spot volume -3.2",
     ]
     assert default_text.split("\n")[0] == "Traditional regime: +12.3 (neutral)  coverage 80%"
+
+
+def test_render_score_lists_components_that_could_not_be_scored():
+    rep = {"score": 5.0, "label": "neutral", "coverage": 0.8,
+           "drivers": {"positive": [], "negative": []},
+           "signals": {"trend": 0.5, "etf_flows": np.nan, "liquidations": np.nan}}
+    names = {"etf_flows": "ETF flows", "liquidations": "Liquidations"}
+
+    lines = scoring.render_score(rep, names).split("\n")
+
+    assert len(lines) == 4
+    assert lines[3] == "Not scored:   ETF flows, Liquidations"
+
+    complete = dict(rep, signals={"trend": 0.5})
+    assert len(scoring.render_score(complete, names).split("\n")) == 3

@@ -109,8 +109,12 @@ def render_score(report: dict, names: dict | None = None, title: str = "Traditio
 
     head = (f"{title}: {report['score']:+.1f} ({report['label']})"
             f"  coverage {report['coverage']:.0%}")
-    return "\n".join([
+    lines = [
         head,
         f"Pushing up:   {fmt(report['drivers']['positive'])}",
         f"Pushing down: {fmt(report['drivers']['negative'])}",
-    ])
+    ]
+    missing = [key for key, value in report.get("signals", {}).items() if pd.isna(value)]
+    if missing:
+        lines.append(f"Not scored:   {', '.join(names.get(key, key) for key in missing)}")
+    return "\n".join(lines)
