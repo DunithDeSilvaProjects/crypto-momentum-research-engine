@@ -6,7 +6,7 @@ from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_se
 from pathlib import Path
 from momentum.config import DEFAULT_SYMBOLS
 from momentum import report as pagebuilder
-from momentum import crypto, regime, rules
+from momentum import checks, crypto, regime, rules
 
 
 
@@ -91,6 +91,12 @@ def main() -> None:
     yrep = regime.yield_regime_report(df.drop(columns=stale))
     print()
     print(regime.render_yield_regime(yrep))
+    check_text = "Data checks:\n" + checks.render_checks([
+        ("10y minus 2y = 2s10s curve", checks.identity_check(df, "DGS10", "DGS2", "T10Y2Y")),
+        ("10y minus real yield = breakeven", checks.identity_check(df, "DGS10", "DFII10", "T10YIE")),
+    ])
+    print()
+    print(check_text)
     
     notes = ["Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed)."]
     if yf_note:
@@ -114,6 +120,7 @@ def main() -> None:
          *crypto_blocks,
          pagebuilder.render_html_yield(yrep),
          pagebuilder.render_html_table(table, UNITS, WINDOWS, stale_after=3, labels=LABELS),
+         pagebuilder.render_html_checks(check_text),
          pagebuilder.render_html_rules(rules.RULES)],
         notes,
     )
