@@ -160,3 +160,17 @@ def test_sharpe_scales_daily_ratio_by_sqrt_periods_and_is_nan_when_flat():
     assert research.sharpe(returns, periods=1) == pytest.approx(0.3872983)
     assert research.sharpe(returns, periods=4) == pytest.approx(0.7745967, rel=1e-6)
     assert np.isnan(research.sharpe(pd.Series([0.01, 0.01, 0.01]), periods=365))
+
+def test_equal_weight_weights_split_gross_one_across_valid_coins():
+    nan = np.nan
+    signal = pd.DataFrame(
+        [[1, 2, nan, 4], [nan, nan, nan, nan], [5, nan, nan, nan]],
+        columns=list("ABCD"), dtype=float,
+    )
+
+    w = research.equal_weight_weights(signal)
+
+    np.testing.assert_allclose(w.iloc[0], [1/3, 1/3, 0, 1/3])
+    np.testing.assert_allclose(w.iloc[1], [0, 0, 0, 0])
+    np.testing.assert_allclose(w.iloc[2], [1, 0, 0, 0])
+    assert w.sum(axis=1).tolist() == pytest.approx([1, 0, 1])

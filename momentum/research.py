@@ -77,3 +77,8 @@ def sharpe(returns: pd.Series, periods: int = 365) -> float:
     if np.isnan(std) or std == 0:
         return float("nan")
     return float(returns.mean() / std * np.sqrt(periods))
+
+def equal_weight_weights(signal: pd.DataFrame) -> pd.DataFrame:
+    member = signal.notna().astype(float)
+    count = member.sum(axis=1)
+    return member.div(count.replace(0, np.nan), axis=0).fillna(0.0)
