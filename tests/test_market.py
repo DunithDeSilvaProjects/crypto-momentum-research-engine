@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-
+import numpy as np
 from momentum import market
 
 
@@ -84,3 +84,23 @@ def test_fetch_yf_optional_returns_an_empty_table_and_a_note_when_the_fetch_fail
     assert note == "Yahoo Finance data unavailable today (RuntimeError)"
     assert isinstance(out.index, pd.DatetimeIndex)
     assert market.drop_incomplete(out, pd.Timestamp("2026-10-16")).empty    # must not raise
+
+
+def test_refill_empty_requests_only_empty_or_missing_tickers():
+    index = pd.to_datetime(["2026-10-22", "2026-10-23"])
+    closes = pd.DataFrame({"SPX": [1.0, 2.0], "NK": [np.nan, np.nan]}, index=index)
+    symbols = {"SPX": "^GSPC", "NK": "^N225", "EU": "^STOXX50E"}
+    asked = []
+
+    def fake_download(ticker, start):
+        asked.append(ticker)
+        if ticker == "^N225":
+            return pd.Series([10.0, 11.0], index=index)
+        return pd.Series(dtype=float)
+
+    out = market.refill_empty(closes, symbols, "2026-01-01", fake_download)
+
+    assert asked == ['^N225', '^STOXX50E']
+    assert out["NK"].tolist() == [10.0, 11.0]
+    assert out["SPX"].tolist() == [1.0, 2.0]
+    assert "EU" not in out.columns

@@ -31,3 +31,14 @@ def render_asof(now: pd.Timestamp, cutoff: pd.Timestamp) -> str:
     head = (f"Generated: {at('UTC')} UTC · {at('Asia/Singapore')} Singapore/Hong Kong"
             f" · {at('America/New_York')} New York")
     return head + "\n" + f"Market data through last complete US session: {cutoff:%a %d %b %Y} (close 16:00 ET)"
+
+
+def refill_empty(closes: pd.DataFrame, symbols: dict, start: str, download) -> pd.DataFrame:
+    out = closes.copy()
+    for name, ticker in symbols.items():
+        if name in out.columns and out[name].notna().any():
+            continue
+        single = download(ticker, start)
+        if len(single) > 0:
+            out[name] = single.reindex(out.index)
+    return out
