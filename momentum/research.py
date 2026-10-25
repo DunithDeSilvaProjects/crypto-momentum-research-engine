@@ -54,7 +54,13 @@ def hold_weights(weights: pd.DataFrame, horizon: int) -> pd.DataFrame:
     kept = weights.iloc[::horizon]
     return kept.reindex(weights.index).ffill()
 
+
 def portfolio_returns(weights: pd.DataFrame, close: pd.DataFrame, lag: int = 1) -> pd.Series:
     asset_returns = close.pct_change()
     held = weights.shift(lag + 1)
     return (held * asset_returns).sum(axis=1)
+
+
+def turnover(weights: pd.DataFrame, lag: int = 1) -> pd.Series:
+    held = weights.shift(lag + 1).fillna(0.0)
+    return held.diff().abs().sum(axis=1)

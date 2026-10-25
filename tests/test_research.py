@@ -119,3 +119,14 @@ def test_portfolio_returns_apply_weights_after_the_execution_lag():
     np.testing.assert_allclose(pnl.iloc[:3], [0, 0, 0], atol=1e-12)
     assert pnl.iloc[3] == pytest.approx(-0.0763158)
     assert len(pnl) == 4
+
+
+def test_turnover_counts_entry_and_flips_on_lagged_positions():
+    weights = pd.DataFrame(
+        {"A": [0.5, 0.5, -0.5, -0.5, 0.0], "B": [-0.5, -0.5, 0.5, 0.5, 0.0]}
+    )
+
+    turn = research.turnover(weights, lag=1)
+
+    np.testing.assert_allclose(turn, [0, 0, 1, 0, 2])
+    assert turn.index.equals(weights.index)
