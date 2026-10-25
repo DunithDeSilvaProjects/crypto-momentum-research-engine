@@ -487,3 +487,36 @@ def test_parse_binance_funding_sorts_floats_and_daily_sum_drops_partial_day():
 def test_parse_binance_funding_raises_on_error_dict():
     with pytest.raises(ValueError, match="Binance error -1121"):
         crypto.parse_binance_funding({"code": -1121, "msg": "Invalid symbol."})
+
+
+def _fake_funding_get(times, calls):
+    def fake_get(url, params):
+        calls.append(params["startTime"])
+        rows = [
+            {"symbol": "X", "fundingTime": t, "fundingRate": "0.0001"}
+            for t in times
+            if t >= params["startTime"]
+        ]
+        return rows[: params["limit"]]
+    return fake_get
+
+
+def test_fetch_binance_funding_pages_until_a_short_page():
+    calls = []
+    fake = _fake_funding_get([1000, 2000, 3000, 4000, 5000], calls)
+
+    rates = crypto.fetch_binance_funding("X", start_ms=0, get=fake, limit=2)
+
+    assert len(rates) == 5
+    assert calls == [0, 2001, 4001]
+
+
+def test_fetch_binance_funding_stops_on_an_empty_page_without_duplicates():
+    calls = []
+    fake = _fake_funding_get([1000, 2000, 3000, 4000], calls)
+
+    rates = crypto.fetch_binance_funding("X", start_ms=0, get=fake, limit=2)
+
+    assert len(rates) == 4
+    assert rates.index.is_unique
+    assert calls == [0, 2001, 4001]

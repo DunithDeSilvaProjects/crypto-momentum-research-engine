@@ -4,6 +4,7 @@ import numpy as np
 from momentum.config import SignalConfig
 from momentum.signals import combine_lookbacks, ewma_vol
 from momentum import scoring
+import requests
 
 KLINE_COLUMNS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
                  "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore"]
@@ -213,3 +214,23 @@ def parse_binance_funding(rows) -> pd.Series:
     times = pd.to_datetime([int(row["fundingTime"]) for row in rows], unit="ms")
     rates = pd.Series([float(row["fundingRate"]) for row in rows], index=times)
     return rates.sort_index()
+
+BINANCE_FUNDING_URL = "https://fapi.binance.com/fapi/v1/fundingRate"
+
+
+def fetch_binance_funding(symbol: str, start_ms: int, get=None, limit: int = 500) -> pd.Series:
+    if get is None:
+        def get(url, params):
+            response = requests.get(url, params=params, timeout=30)
+            response.raise_for_status()
+            return response.json()
+    collected = []
+    while True:
+        params = {"symbol": symbol, "startTime": start_ms, "limit": limit}
+        rows = get(BINANCE_FUNDING_URL, params)
+        parse_binance_funding(rows)
+        collected.extend(rows)
+        if len(rows) < limit:
+            break
+        start_ms = int(rows[-1]["fundingTime"]) + 1
+    return parse_binance_funding(collected)
