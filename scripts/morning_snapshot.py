@@ -2,7 +2,7 @@ from momentum import snapshot
 from momentum.macro import load_fred
 from momentum import scoring
 import pandas as pd
-from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_session, render_asof
+from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_session, overlay_fresh, render_asof
 from pathlib import Path
 from momentum.config import DEFAULT_SYMBOLS
 from momentum import report as pagebuilder
@@ -49,7 +49,7 @@ CRYPTO_NAMES = {
 }
 
 MAX_AGE_DAYS = 3
-YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX", "SX5E": "^STOXX50E", "N225": "^N225"}
+YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX", "SX5E": "^STOXX50E", "N225": "^N225", "SP500_YF": "^GSPC"}
 COIN_NAMES = {"BTCUSDT": "BTC", "ETHUSDT": "ETH"}
 SITE_DIR = Path("site")
 
@@ -61,6 +61,8 @@ def main() -> None:
     cutoff = last_complete_session(now)
     yf_raw, yf_note = fetch_yf_optional(YF_SYMBOLS, "2025-01-01")
     yf_closes = drop_incomplete(yf_raw, cutoff)
+    fred = overlay_fresh(fred, yf_closes, {"SP500": "SP500_YF"})
+    yf_closes = yf_closes.drop(columns=["SP500_YF"], errors="ignore")
     spot_closes, spot_volumes, spot_failed = crypto.load_spot_panel(DEFAULT_SYMBOLS, now)
     coin_rows = crypto.select_for_table(spot_closes, COIN_NAMES)
     df = pd.concat([fred, yf_closes, coin_rows], axis=1, sort=True)
@@ -87,7 +89,7 @@ def main() -> None:
         print(note)
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
-    print("Source: FRED (daily). DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed).")
+    print("Source: FRED (daily). S&P 500 (with FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed).")
     generated = now.strftime("%Y-%m-%d %H:%M UTC")
     
     yrep = regime.yield_regime_report(df.drop(columns=stale))
@@ -100,7 +102,7 @@ def main() -> None:
     print()
     print(check_text)
     
-    notes = ["Source: FRED (daily). DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed)."]
+    notes = ["Source: FRED (daily). S&P 500 (with FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed)."]
     if yf_note:
         notes.append(yf_note)
     if stale:
