@@ -96,7 +96,7 @@ def main() -> None:
     if yf_note:
         notes.append(yf_note)
     if stale:
-        notes.append("Excluded from the score as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
+        notes.append("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
     notes.append("Crypto: Binance spot (data-api.binance.vision), OKX perpetual swaps (funding, open interest), DefiLlama (stablecoin supply).")
     notes.extend(deriv_notes)
     if crypto_note:
