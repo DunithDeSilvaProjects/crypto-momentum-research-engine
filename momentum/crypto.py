@@ -243,4 +243,7 @@ def funding_panel(symbols, start_ms: int, index: pd.DatetimeIndex,
         counts = rates.groupby(rates.index.normalize()).count()
         per_day = int(counts.mode().iloc[0])
         columns[symbol] = daily_funding(rates, per_day)
-    return pd.DataFrame(columns).reindex(index).fillna(0.0)
+    frame = pd.DataFrame(columns)
+    if index.tz is not None:
+        frame.index = frame.index.tz_localize(index.tz)
+    return frame.reindex(index).fillna(0.0)
