@@ -48,3 +48,24 @@ Reproduce with `PYTHONPATH=. python scripts/run_stage1.py`; the raw table is `do
 
 ## What would be a new study
 Reversal, different lookbacks, other horizons, other universes or non-price signals are new hypotheses. They need their own protocol and fresh data, and must be labelled exploratory if looked at on this sample.
+
+## Addendum, 25 Oct 2026: Stage 2 (portfolio, costs, funding, baselines)
+
+Run exactly as fixed in the protocol amendment of the same date: combined signal, 5-day horizon, long the top 5 and short the bottom 5, 10 bp per side, actual Binance funding, evaluation window 2021-04-03 to 2026-10-24 (2,031 days, about 5.6 years). Nothing was changed after the numbers were seen.
+
+| Series | Gross Sharpe | Net of costs | Net of costs and funding | Std. error | Turnover per year |
+|---|---|---|---|---|---|
+| Long-short momentum | 0.08 | -0.04 | -0.01 | 0.42 | 30.4 |
+| Equal-weight long-only | 0.37 | 0.37 | 0.29 | 0.43 | 0.2 |
+| BTC buy-and-hold | 0.38 | 0.38 | 0.23 | 0.43 | 0.0 |
+
+Reading
+- Success criterion 2 is not met: the long-short Sharpe after costs and funding is -0.01 (standard error 0.42), which is not positive and is indistinguishable from zero. Criteria 1 and 3 had already failed in Stage 1, so all three criteria fail and the null result stands.
+- The gross Sharpe of 0.08 is what an IC of about zero implies. The book turns over about 30 times its gross exposure a year, roughly 3.0% of capital in costs at 10 bp per side, which takes the Sharpe from 0.08 to -0.04. Funding then adds back 0.03 for this dollar-neutral book.
+- The long-only baselines earn Sharpe ratios of 0.23 to 0.29, each within about 0.7 standard errors of zero, and they carry crypto beta and survivorship. They are a reference point, not evidence for or against the signal. Funding costs them 0.08 (equal-weight) and 0.15 (BTC) of Sharpe.
+
+Limits specific to Stage 2
+- One path of 5.6 years: with a Sharpe standard error of about 0.4, only an annual Sharpe above roughly 0.8 could have been told apart from zero.
+- Funding gaps are zero-filled by the pre-registered rule. Coverage is 100% for 18 of the 20 coins, 68% for BNB (probably a funding schedule change that drops the minority-schedule days; not investigated) and 62% for ARB (listed in 2023). BNB's funding is therefore understated.
+- Costs are a flat 10 bp per side. There is no market impact or spread widening in stress, which would only make the net result worse.
+- The 20 coins are today's survivors, which flatters the long-only baselines most.
