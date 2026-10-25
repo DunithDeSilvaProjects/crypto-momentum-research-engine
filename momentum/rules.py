@@ -31,7 +31,7 @@ RULES = [
      "rule": "Classifies the moves of the 10y real yield, 10y breakeven and S&P 500 (nominal yield = real yield + breakeven inflation) into inflationary risk-off, growth scare, growth-positive, liquidity-positive, or mixed.",
      "status": "convention"},
     {"area": "Yield-regime thresholds",
-     "rule": "A move is flat inside 2 bp (yields) or 0.5% (S&P 500), computed on the latest date all three inputs share. Draft values, to be replaced by data-driven thresholds.",
+     "rule": "A move is flat inside 2 bp (yields) or 0.5% (S&P 500), computed on the latest date all three inputs share. A move within 25% of its threshold is flagged as borderline under the label, because the label could change on a small revision. Draft values, to be replaced by data-driven thresholds.",
      "status": "judgment"},
     {"area": "Equity breadth",
      "rule": "Not included yet. Planned free proxy: equal-weight versus cap-weight S&P 500.",

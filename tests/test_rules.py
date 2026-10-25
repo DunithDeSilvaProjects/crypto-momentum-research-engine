@@ -15,3 +15,10 @@ def test_crypto_rules_quote_the_numbers_that_live_in_the_code():
     assert "etf flows 10" in by_area["Crypto components"]["rule"]
     assert "70%" in by_area["Crypto minimum coverage"]["rule"]
     assert by_area["Crypto data"]["status"] == "proxy"
+
+
+def test_rules_explain_the_borderline_flag():
+    text = " ".join(str(rule) for rule in rules.RULES).lower()
+
+    assert "borderline" in text
+    assert "25%" in text
