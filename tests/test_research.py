@@ -94,3 +94,15 @@ def test_long_short_weights_are_dollar_neutral_with_gross_one_and_flat_when_too_
     np.testing.assert_allclose(w.iloc[2], [-0.25, 0, -0.25, 0.25, 0.25, 0])
     assert w.iloc[0].sum() == pytest.approx(0)
     assert w.iloc[0].abs().sum() == pytest.approx(1)
+
+
+def test_hold_weights_keeps_every_hth_row_and_carries_it_forward():
+    weights = pd.DataFrame(
+        {"A": [0.5, 0.1, 0.2, 0.3, 0.4], "B": [-0.5, -0.1, -0.2, -0.3, -0.4]}
+    )
+
+    held = research.hold_weights(weights, horizon=2)
+
+    np.testing.assert_allclose(held["A"], [0.5, 0.5, 0.2, 0.2, 0.4])
+    np.testing.assert_allclose(held["B"], [-0.5, -0.5, -0.2, -0.2, -0.4])
+    assert research.hold_weights(weights, horizon=1).equals(weights)

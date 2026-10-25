@@ -48,3 +48,8 @@ def long_short_weights(signal: pd.DataFrame, k: int = 5) -> pd.DataFrame:
     short = rank_low <= k
     weights = long * (0.5 / k) - short * (0.5 / k)
     return weights.where(valid >= 2 * k, 0.0).astype(float)
+
+
+def hold_weights(weights: pd.DataFrame, horizon: int) -> pd.DataFrame:
+    kept = weights.iloc[::horizon]
+    return kept.reindex(weights.index).ffill()
