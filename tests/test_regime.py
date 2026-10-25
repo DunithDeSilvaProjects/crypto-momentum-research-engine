@@ -98,3 +98,11 @@ def test_render_yield_regime_states_the_shared_as_of_date():
 
     rep["asof"] = pd.NaT
     assert "as of" not in regime.render_yield_regime(rep)
+
+def test_borderline_flags_moves_within_a_quarter_of_the_threshold_either_side():
+    assert regime.borderline(2.0, 2.0) is True
+    assert regime.borderline(-1.6, 2.0) is True
+    assert regime.borderline(1.4, 2.0) is False
+    assert regime.borderline(2.6, 2.0) is False
+    assert regime.borderline(np.nan, 2.0) is False
+    assert regime.borderline(0.0055, 0.005) is True

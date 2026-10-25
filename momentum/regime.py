@@ -63,3 +63,8 @@ def render_yield_regime(rep: dict) -> str:
     if asof is not None and not pd.isna(asof):
         body += f", as of {asof:%d %b}"
     return head + "\n" + body
+
+def borderline(change: float, dead: float, margin: float = 0.25) -> bool:
+    if pd.isna(change):
+        return False
+    return bool(abs(abs(change) - dead) <= margin * dead)
