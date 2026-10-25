@@ -64,3 +64,6 @@ def portfolio_returns(weights: pd.DataFrame, close: pd.DataFrame, lag: int = 1) 
 def turnover(weights: pd.DataFrame, lag: int = 1) -> pd.Series:
     held = weights.shift(lag + 1).fillna(0.0)
     return held.diff().abs().sum(axis=1)
+
+def net_returns(gross: pd.Series, turn: pd.Series, cost_bps: float = 10.0) -> pd.Series:
+    return gross - turn * cost_bps / 10000

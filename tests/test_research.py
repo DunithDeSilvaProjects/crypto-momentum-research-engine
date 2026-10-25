@@ -130,3 +130,13 @@ def test_turnover_counts_entry_and_flips_on_lagged_positions():
 
     np.testing.assert_allclose(turn, [0, 0, 1, 0, 2])
     assert turn.index.equals(weights.index)
+
+
+def test_net_returns_subtract_cost_per_unit_of_turnover():
+    gross = pd.Series([0.0, 0.0, 0.02, -0.01, 0.03])
+    turn = pd.Series([0.0, 0.0, 1.0, 0.0, 2.0])
+
+    net = research.net_returns(gross, turn, cost_bps=10.0)
+
+    np.testing.assert_allclose(net, [0, 0, 0.019, -0.01, 0.028])
+    assert research.net_returns(gross, turn, cost_bps=0.0).equals(gross)
