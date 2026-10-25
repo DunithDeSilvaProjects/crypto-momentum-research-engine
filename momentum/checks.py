@@ -21,5 +21,5 @@ def render_checks(checks: list) -> str:
             lines.append(f"{label}: not checked (data missing)")
             continue
         verdict = "ok" if result["ok"] else "MISMATCH"
-        lines.append(f"{label}: {verdict} (gap {result['gap'] * 100:+.1f} bp, as of {result['asof']:%d %b})")
+        lines.append(f"{label}: {verdict} (gap {round(result['gap'] * 100, 1) + 0.0:+.1f} bp, as of {result['asof']:%d %b})")
     return "\n".join(lines)

@@ -46,3 +46,9 @@ def test_render_checks_says_ok_mismatch_or_not_checked():
         "10y minus real = breakeven: MISMATCH (gap +5.0 bp, as of 22 Oct)",
         "third check: not checked (data missing)",
     ]
+
+
+def test_render_checks_never_prints_negative_zero():
+    result = {"asof": pd.Timestamp("2026-10-22"), "gap": -1e-15, "ok": True}
+
+    assert checks.render_checks([("x", result)]) == "x: ok (gap +0.0 bp, as of 22 Oct)"
