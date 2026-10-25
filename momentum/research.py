@@ -38,3 +38,13 @@ def momentum_signal(
     capped = winsorize(raw, cfg.winsor)
     liquid = liquidity_mask(quote_volume, liq_window, min_volume)
     return cross_sectional_zscore(capped.where(liquid))
+
+
+def long_short_weights(signal: pd.DataFrame, k: int = 5) -> pd.DataFrame:
+    valid = signal.notna().sum(axis=1)
+    rank_low = signal.rank(axis=1, method="first")
+    rank_high = signal.rank(axis=1, method="first", ascending=False)
+    long = rank_high <= k
+    short = rank_low <= k
+    weights = long * (0.5 / k) - short * (0.5 / k)
+    return weights.where(valid >= 2 * k, 0.0).astype(float)

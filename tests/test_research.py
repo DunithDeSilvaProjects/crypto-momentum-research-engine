@@ -78,3 +78,19 @@ def test_momentum_signal_never_uses_the_future():
     part = research.momentum_signal(close.iloc[: cut + 1], volume.iloc[: cut + 1])
 
     pd.testing.assert_frame_equal(full.iloc[: cut + 1], part)
+
+
+def test_long_short_weights_are_dollar_neutral_with_gross_one_and_flat_when_too_few_coins():
+    cols = list("ABCDEF")
+    signal = pd.DataFrame(
+        [[3, 1, 2, 6, 5, 4], [3, np.nan, 2, np.nan, np.nan, 4], [3, np.nan, 2, 6, 5, 4]],
+        columns=cols, dtype=float,
+    )
+
+    w = research.long_short_weights(signal, k=2)
+
+    np.testing.assert_allclose(w.iloc[0], [0, -0.25, -0.25, +0.25, +0.25, 0])
+    np.testing.assert_allclose(w.iloc[1], [0, 0, 0, 0, 0, 0])
+    np.testing.assert_allclose(w.iloc[2], [-0.25, 0, -0.25, 0.25, 0.25, 0])
+    assert w.iloc[0].sum() == pytest.approx(0)
+    assert w.iloc[0].abs().sum() == pytest.approx(1)
