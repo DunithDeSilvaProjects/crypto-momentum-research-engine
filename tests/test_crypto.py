@@ -465,3 +465,25 @@ def test_parse_stablecoin_supply_drops_todays_unfinished_row_when_now_is_given()
     assert len(crypto.parse_stablecoin_supply(rows, midday)) == 2
     assert len(crypto.parse_stablecoin_supply(rows, next_day)) == 3
     assert len(crypto.parse_stablecoin_supply(rows)) == 3
+
+
+def test_parse_binance_funding_sorts_floats_and_daily_sum_drops_partial_day():
+    rows = [
+        {"symbol": "BTCUSDT", "fundingTime": 1792857600000, "fundingRate": "0.00000960"},
+        {"symbol": "BTCUSDT", "fundingTime": 1792886400000, "fundingRate": "0.00009409"},
+        {"symbol": "BTCUSDT", "fundingTime": 1792915200000, "fundingRate": "0.00006005"},
+        {"symbol": "BTCUSDT", "fundingTime": 1792944000000, "fundingRate": "0.00008027"},
+    ]
+
+    rates = crypto.parse_binance_funding(rows)
+    daily = crypto.daily_funding(rates)
+
+    assert len(rates) == 4
+    assert rates.iloc[0] == pytest.approx(0.0000096)
+    assert len(daily) == 1
+    assert daily.iloc[0] == pytest.approx(0.00023441)
+
+
+def test_parse_binance_funding_raises_on_error_dict():
+    with pytest.raises(ValueError, match="Binance error -1121"):
+        crypto.parse_binance_funding({"code": -1121, "msg": "Invalid symbol."})

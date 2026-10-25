@@ -205,3 +205,11 @@ def crypto_report(closes, volumes, derivs, cfg: SignalConfig = SignalConfig(), k
                   min_coverage: float = CRYPTO_MIN_COVERAGE) -> dict:
     signals = crypto_signals(closes, volumes, derivs, cfg)
     return scoring.report_from_signals(signals,CRYPTO_WEIGHTS , k, min_coverage)
+
+
+def parse_binance_funding(rows) -> pd.Series:
+    if isinstance(rows, dict):
+        raise ValueError(f"Binance error {rows.get('code')}: {rows.get('msg')}")
+    times = pd.to_datetime([int(row["fundingTime"]) for row in rows], unit="ms")
+    rates = pd.Series([float(row["fundingRate"]) for row in rows], index=times)
+    return rates.sort_index()
