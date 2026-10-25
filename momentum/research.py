@@ -53,3 +53,8 @@ def long_short_weights(signal: pd.DataFrame, k: int = 5) -> pd.DataFrame:
 def hold_weights(weights: pd.DataFrame, horizon: int) -> pd.DataFrame:
     kept = weights.iloc[::horizon]
     return kept.reindex(weights.index).ffill()
+
+def portfolio_returns(weights: pd.DataFrame, close: pd.DataFrame, lag: int = 1) -> pd.Series:
+    asset_returns = close.pct_change()
+    held = weights.shift(lag + 1)
+    return (held * asset_returns).sum(axis=1)

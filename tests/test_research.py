@@ -106,3 +106,16 @@ def test_hold_weights_keeps_every_hth_row_and_carries_it_forward():
     np.testing.assert_allclose(held["A"], [0.5, 0.5, 0.2, 0.2, 0.4])
     np.testing.assert_allclose(held["B"], [-0.5, -0.5, -0.2, -0.2, -0.4])
     assert research.hold_weights(weights, horizon=1).equals(weights)
+
+
+def test_portfolio_returns_apply_weights_after_the_execution_lag():
+    close = pd.DataFrame(
+        {"A": [100, 110, 121, 108.9], "B": [200, 190, 209, 220]}, dtype=float
+    )
+    weights = pd.DataFrame({"A": [0.5] * 4, "B": [-0.5] * 4})
+
+    pnl = research.portfolio_returns(weights, close, lag=1)
+
+    np.testing.assert_allclose(pnl.iloc[:3], [0, 0, 0], atol=1e-12)
+    assert pnl.iloc[3] == pytest.approx(-0.0763158)
+    assert len(pnl) == 4
