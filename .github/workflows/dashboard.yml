@@ -2,8 +2,8 @@ name: dashboard
 
 on:
   schedule:
-    - cron: "47 22 * * 1-5"   # 22:47 UTC = 06:47 Singapore/Hong Kong next morning, after the US close (17:00 New York in both summer and winter time)
-    - cron: "30 0 * * 2-6"    # kept as a second run, once FRED has published more
+    - cron: "47 22 * * 0-4"   # 22:47 UTC = 06:47 Singapore/Hong Kong next morning, after the US close (17:00 New York in both summer and winter time)
+    - cron: "30 0 * * 1-5"    # kept as a second run, once FRED has published more
   workflow_dispatch:          # lets you run it by hand
 
 permissions:
