@@ -234,3 +234,13 @@ def fetch_binance_funding(symbol: str, start_ms: int, get=None, limit: int = 500
             break
         start_ms = int(rows[-1]["fundingTime"]) + 1
     return parse_binance_funding(collected)
+
+def funding_panel(symbols, start_ms: int, index: pd.DatetimeIndex,
+                  fetch=fetch_binance_funding) -> pd.DataFrame:
+    columns = {}
+    for symbol in symbols:
+        rates = fetch(symbol, start_ms)
+        counts = rates.groupby(rates.index.normalize()).count()
+        per_day = int(counts.mode().iloc[0])
+        columns[symbol] = daily_funding(rates, per_day)
+    return pd.DataFrame(columns).reindex(index).fillna(0.0)

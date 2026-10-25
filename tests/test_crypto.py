@@ -520,3 +520,26 @@ def test_fetch_binance_funding_stops_on_an_empty_page_without_duplicates():
     assert len(rates) == 4
     assert rates.index.is_unique
     assert calls == [0, 2001, 4001]
+
+def test_funding_panel_uses_each_coins_own_schedule_and_zero_fills_gaps():
+    a_times = pd.to_datetime([
+        "2026-01-01 00:00", "2026-01-01 08:00", "2026-01-01 16:00",
+        "2026-01-02 00:00", "2026-01-02 08:00", "2026-01-02 16:00",
+    ])
+    b_times = pd.to_datetime([
+        "2026-01-01 00:00", "2026-01-01 12:00", "2026-01-02 00:00",
+        "2026-01-02 12:00", "2026-01-03 00:00",
+    ])
+    rates = {
+        "A": pd.Series([0.0001] * 3 + [0.0002] * 3, index=a_times),
+        "B": pd.Series([0.0005, 0.0005, 0.0001, 0.0001, 0.0009], index=b_times),
+    }
+    index = pd.date_range("2026-01-01", periods=3)
+
+    panel = crypto.funding_panel(["A", "B"], start_ms=0, index=index,
+                                 fetch=lambda symbol, start_ms: rates[symbol])
+
+    np.testing.assert_allclose(panel["A"], [0.0003, 0.0006, 0])
+    np.testing.assert_allclose(panel["B"], [0.001, 0.0002, 0])
+    assert list(panel.columns) == ["A", "B"]
+    assert panel.index.equals(index)
