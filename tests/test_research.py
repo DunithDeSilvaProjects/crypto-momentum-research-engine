@@ -152,3 +152,11 @@ def test_funding_returns_charge_longs_and_pay_shorts_on_lagged_positions():
 
     np.testing.assert_allclose(pnl, [0, 0, -0.0008, 0.0007], atol=1e-12)
     assert len(pnl) == 4
+
+
+def test_sharpe_scales_daily_ratio_by_sqrt_periods_and_is_nan_when_flat():
+    returns = pd.Series([0.01, -0.01, 0.02, 0.0])
+
+    assert research.sharpe(returns, periods=1) == pytest.approx(0.3872983)
+    assert research.sharpe(returns, periods=4) == pytest.approx(0.7745967, rel=1e-6)
+    assert np.isnan(research.sharpe(pd.Series([0.01, 0.01, 0.01]), periods=365))

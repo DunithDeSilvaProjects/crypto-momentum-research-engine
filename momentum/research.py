@@ -71,3 +71,9 @@ def net_returns(gross: pd.Series, turn: pd.Series, cost_bps: float = 10.0) -> pd
 def funding_returns(weights: pd.DataFrame, funding: pd.DataFrame, lag: int = 1) -> pd.Series:
     held = weights.shift(lag + 1)
     return - (held * funding).sum(axis=1)
+
+def sharpe(returns: pd.Series, periods: int = 365) -> float:
+    std = returns.std(ddof=1)
+    if np.isnan(std) or std == 0:
+        return float("nan")
+    return float(returns.mean() / std * np.sqrt(periods))
