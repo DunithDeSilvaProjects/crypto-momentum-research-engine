@@ -82,3 +82,12 @@ def equal_weight_weights(signal: pd.DataFrame) -> pd.DataFrame:
     member = signal.notna().astype(float)
     count = member.sum(axis=1)
     return member.div(count.replace(0, np.nan), axis=0).fillna(0.0)
+
+def run_portfolio(weights: pd.DataFrame, close: pd.DataFrame, funding: pd.DataFrame,
+                  horizon: int, lag: int = 1, cost_bps: float = 10.0) -> pd.DataFrame:
+    held = hold_weights(weights, horizon)
+    gross = portfolio_returns(held, close, lag)
+    turn = turnover(held, lag)
+    fund = funding_returns(held, funding, lag)
+    net = net_returns(gross, turn, cost_bps) + fund
+    return pd.DataFrame({"gross": gross, "turnover": turn, "funding": fund, "net": net})

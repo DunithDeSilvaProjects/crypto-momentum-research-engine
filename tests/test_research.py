@@ -174,3 +174,22 @@ def test_equal_weight_weights_split_gross_one_across_valid_coins():
     np.testing.assert_allclose(w.iloc[1], [0, 0, 0, 0])
     np.testing.assert_allclose(w.iloc[2], [1, 0, 0, 0])
     assert w.sum(axis=1).tolist() == pytest.approx([1, 0, 1])
+
+def test_run_portfolio_chains_hold_returns_turnover_cost_and_funding():
+    close = pd.DataFrame(
+        {"A": [100, 100, 110, 110, 121], "B": [100, 100, 100, 90, 90]}, dtype=float
+    )
+    weights = pd.DataFrame(
+        {"A": [0.5, -0.5, -0.5, 0.5, 0.5], "B": [-0.5, 0.5, 0.5, -0.5, -0.5]}
+    )
+    funding = pd.DataFrame({"A": [0.001] * 5, "B": [0.0002] * 5})
+
+    out = research.run_portfolio(weights, close, funding, horizon=2, lag=1, cost_bps=10.0)
+
+    assert list(out.columns) == ["gross", "turnover", "funding", "net"]
+    np.testing.assert_allclose(out["gross"], [0, 0, 0.05, 0.05, -0.05], atol=1e-12)
+    np.testing.assert_allclose(out["turnover"], [0, 0, 1, 0, 2], atol=1e-12)
+    np.testing.assert_allclose(out["funding"], [0, 0, -0.0004, -0.0004, 0.0004], atol=1e-12)
+    np.testing.assert_allclose(out["net"], [0, 0, 0.0486, 0.0496, -0.0516], atol=1e-12)
+
+
