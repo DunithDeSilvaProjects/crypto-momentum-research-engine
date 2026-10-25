@@ -140,3 +140,15 @@ def test_net_returns_subtract_cost_per_unit_of_turnover():
 
     np.testing.assert_allclose(net, [0, 0, 0.019, -0.01, 0.028])
     assert research.net_returns(gross, turn, cost_bps=0.0).equals(gross)
+
+
+def test_funding_returns_charge_longs_and_pay_shorts_on_lagged_positions():
+    weights = pd.DataFrame({"A": [0.5] * 4, "B": [-0.5] * 4})
+    funding = pd.DataFrame(
+        {"A": [0.001, 0.001, 0.002, -0.001], "B": [0.0004] * 4}
+    )
+
+    pnl = research.funding_returns(weights, funding, lag=1)
+
+    np.testing.assert_allclose(pnl, [0, 0, -0.0008, 0.0007], atol=1e-12)
+    assert len(pnl) == 4
