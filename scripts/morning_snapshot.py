@@ -87,7 +87,7 @@ def main() -> None:
         print(note)
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
-    print("Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed).")
+    print("Source: FRED (daily). DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed).")
     generated = now.strftime("%Y-%m-%d %H:%M UTC")
     
     yrep = regime.yield_regime_report(df.drop(columns=stale))
@@ -100,7 +100,7 @@ def main() -> None:
     print()
     print(check_text)
     
-    notes = ["Source: FRED (daily). DXY, VIX, gold and Nasdaq 100 from Yahoo Finance via yfinance (unofficial, delayed)."]
+    notes = ["Source: FRED (daily). DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed)."]
     if yf_note:
         notes.append(yf_note)
     if stale:
