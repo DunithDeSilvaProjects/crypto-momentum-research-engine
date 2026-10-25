@@ -50,3 +50,6 @@ def download_single_close(ticker: str, start: str) -> pd.Series:
         return pd.Series(dtype=float)
     close = raw["Close"]
     return close.iloc[:, 0] if isinstance(close, pd.DataFrame) else close
+
+def prefer_fresh(fresh: pd.Series, fallback: pd.Series) -> pd.Series:
+    return fresh.combine_first(fallback)

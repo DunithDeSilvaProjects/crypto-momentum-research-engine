@@ -121,3 +121,18 @@ def test_fetch_yf_closes_refills_a_ticker_the_batch_returned_empty(monkeypatch):
     assert list(out.columns) == ["SPX", "NK"]
     assert out["SPX"].tolist() == [1.0, 2.0]
     assert out["NK"].tolist() == [10, 11]
+
+
+def test_prefer_fresh_takes_fresh_values_and_falls_back_for_older_dates():
+    fred = pd.Series([100.0, 101.5], index=pd.to_datetime(["2026-10-20", "2026-10-21"]))
+    yahoo = pd.Series(
+        [101.0, 102.0, 103.0],
+        index=pd.to_datetime(["2026-10-21", "2026-10-22", "2026-10-23"]),
+    )
+
+    out = market.prefer_fresh(yahoo, fred)
+
+    assert out.tolist() == [100.0, 101.0, 102.0, 103.0]
+    assert out.index[-1] == pd.Timestamp("2026-10-23")
+    empty = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
+    assert market.prefer_fresh(empty, fred).tolist() == [100.0, 101.5]
