@@ -41,4 +41,5 @@ No tuning of lookbacks, thresholds, costs or horizons on this sample. No droppin
 Whether the dashboard's regime scores predict anything. They are descriptive, rules-based summaries and are not claimed to be forecasts.
 
 ## Amendments
-(none)
+- 25 Oct 2026, before any rank IC was computed: the liquidity filter uses the 30-day MEDIAN of daily quote volume (at least 10 million USD), which is what the tested engine function liquidity_mask computes, instead of the average written above. A median is not moved by one spike day. The 91-day history rule needs no separate code: the signal needs 90 days of prices, so a coin has no signal before that.
+- 25 Oct 2026, before any rank IC was computed: the evaluation is staged. Stage 1 (rank IC, t-statistics, half-sample check) is run first. Stage 2 (long-short portfolio, costs, funding, baselines) follows. Success criterion 2 is evaluated only in stage 2. Until then the primary hypothesis is reported as IC evidence only, not yet assessed against all three criteria.
