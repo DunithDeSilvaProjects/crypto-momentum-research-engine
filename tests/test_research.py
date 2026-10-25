@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from momentum import research
+from momentum.config import SignalConfig
 
 
 def test_forward_returns_start_after_the_execution_lag_and_end_in_nan():
@@ -45,3 +46,35 @@ def test_ic_summary_samples_every_step_th_day_to_avoid_overlap():
     assert weekly["mean"] == pytest.approx(0.1/3)
     assert weekly["t"] == pytest.approx(0.5)
     assert weekly["hit_rate"] == pytest.approx(2 / 3)
+
+
+def test_momentum_signal_masks_illiquid_coins_and_standardises_each_day():
+    days = np.arange(40)
+    close = pd.DataFrame({
+        "A": 100 * 1.01 ** days, "B": 100 * 1.02 ** days,
+        "C": 100 * 0.99 ** days, "D": 100 * 1.05 ** days,
+    })
+    volume = pd.DataFrame({"A": 5e7, "B": 5e7, "C": 5e7, "D": 1e3}, index=close.index)
+
+    sig = research.momentum_signal(close, volume, SignalConfig(lookbacks=(4,)))
+    last = sig.iloc[-1]
+
+    assert np.isnan(last["D"])
+    assert last["C"] == last[["A", "B", "C"]].min()
+    assert last[["A", "B", "C"]].mean() == pytest.approx(0, abs=1e-9)
+    assert last[["A", "B", "C"]].std() == pytest.approx(1)
+    assert sig.iloc[:28].isna().all().all()
+
+
+def test_momentum_signal_never_uses_the_future():
+    rng = np.random.default_rng(1)
+    close = pd.DataFrame(
+        100 * np.exp(np.cumsum(rng.normal(0, 0.02, (200, 5)), axis=0)), columns=list("ABCDE")
+    )
+    volume = pd.DataFrame(5e7, index=close.index, columns=close.columns)
+    cut = 150
+
+    full = research.momentum_signal(close, volume)
+    part = research.momentum_signal(close.iloc[: cut + 1], volume.iloc[: cut + 1])
+
+    pd.testing.assert_frame_equal(full.iloc[: cut + 1], part)
