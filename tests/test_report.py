@@ -99,3 +99,9 @@ def test_render_html_checks_wraps_each_line_in_a_paragraph_and_escapes():
     out = report.render_html_checks("A & B: ok\nC: MISMATCH")
 
     assert out == '<section class="checks"><p>A &amp; B: ok</p><p>C: MISMATCH</p></section>'
+
+
+def test_render_html_headline_wraps_each_line_in_a_paragraph_and_escapes():
+    out = report.render_html_headline("Line one\nR&D: two")
+
+    assert out == '<section class="headline"><p>Line one</p><p>R&amp;D: two</p></section>'

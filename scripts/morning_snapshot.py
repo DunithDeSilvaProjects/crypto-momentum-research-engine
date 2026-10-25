@@ -6,7 +6,7 @@ from momentum.market import drop_incomplete, fetch_yf_optional, last_complete_se
 from pathlib import Path
 from momentum.config import DEFAULT_SYMBOLS
 from momentum import report as pagebuilder
-from momentum import checks, crypto, regime, rules
+from momentum import brief, checks, crypto, regime, rules
 
 
 
@@ -108,6 +108,9 @@ def main() -> None:
     if crypto_note:
         notes.append(crypto_note)
     notes.append("Rules-based, descriptive score. Weights are not validated and it is not a forecast.")
+    headline = brief.render_headline(report, crypto_rep, yrep, {**SCORE_NAMES, **CRYPTO_NAMES})
+    print()
+    print(headline)
     crypto_blocks = (
         [pagebuilder.render_html_score(crypto_rep, CRYPTO_NAMES, "Crypto regime")]
         if crypto_rep is not None else []
@@ -116,6 +119,7 @@ def main() -> None:
         "Morning Market Dashboard",
         generated,
         [pagebuilder.render_html_asof(asof),
+         pagebuilder.render_html_headline(headline),
          pagebuilder.render_html_score(report, SCORE_NAMES),
          *crypto_blocks,
          pagebuilder.render_html_yield(yrep),
