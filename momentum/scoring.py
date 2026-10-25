@@ -17,16 +17,16 @@ def change_series(series: pd.Series, n: int, unit: str) -> pd.Series:
         return s / s.shift(n) - 1
     raise ValueError(f"unit must be 'bp' or 'pct', got {unit!r}")
 
-def normal_size(series: pd.Series, n: int, unit: str, lookback: int) -> float:
+def normal_size(series: pd.Series, n: int, unit: str, lookback: int, min_obs: int = 1) -> float:
     ch = change_series(series, n, unit).dropna()
     past = ch.iloc[:-1].tail(lookback)
-    if past.empty:
+    if len(past) < min_obs:
         return np.nan
     return past.abs().mean()
 
 def component_signal(series: pd.Series, n: int, unit: str, up_is_good: bool, lookback: int) -> float:
     change = obs_change(series, n, unit)
-    normal = normal_size(series, n, unit, lookback)
+    normal = normal_size(series, n, unit, lookback, min_obs=max(1, lookback // 3))
     return signal(change, normal, up_is_good)
 
 

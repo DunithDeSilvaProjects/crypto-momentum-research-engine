@@ -255,3 +255,17 @@ def test_render_score_lists_components_that_could_not_be_scored():
 
     complete = dict(rep, signals={"trend": 0.5})
     assert len(scoring.render_score(complete, names).split("\n")) == 3
+
+
+def test_normal_size_needs_min_obs_past_moves():
+    s = pd.Series([4.00, 4.03, 4.00, 4.04, 4.01])
+
+    assert scoring.normal_size(s, 1, "bp", lookback=10, min_obs=3) == pytest.approx(10/3)
+    assert np.isnan(scoring.normal_size(s, 1, "bp", lookback=10, min_obs=4))
+
+
+def test_component_signal_is_missing_when_history_is_under_a_third_of_the_lookback():
+    s = pd.Series([4.00, 4.03, 4.00, 4.04, 4.01])
+
+    assert not np.isnan(scoring.component_signal(s, 1, "bp", True, lookback=9))
+    assert np.isnan(scoring.component_signal(s, 1, "bp", True, lookback=12))
