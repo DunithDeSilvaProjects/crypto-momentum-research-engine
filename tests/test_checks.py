@@ -32,3 +32,17 @@ def test_identity_check_is_unknown_when_inputs_are_missing():
 
     assert checks.identity_check(df, "DGS10", "DGS2", "T10Y2Y")["ok"] is None
     assert checks.identity_check(df, "DGS10", "DGS2", "NOPE")["ok"] is None
+
+
+def test_render_checks_says_ok_mismatch_or_not_checked():
+    results = [
+        ("10y minus 2y = 2s10s", {"asof": pd.Timestamp("2026-10-22"), "gap": 0.0, "ok": True}),
+        ("10y minus real = breakeven", {"asof": pd.Timestamp("2026-10-22"), "gap": 0.05, "ok": False}),
+        ("third check", {"asof": pd.NaT, "gap": np.nan, "ok": None}),
+    ]
+
+    assert checks.render_checks(results).split("\n") == [
+        "10y minus 2y = 2s10s: ok (gap +0.0 bp, as of 22 Oct)",
+        "10y minus real = breakeven: MISMATCH (gap +5.0 bp, as of 22 Oct)",
+        "third check: not checked (data missing)",
+    ]
