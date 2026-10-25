@@ -93,3 +93,9 @@ def test_render_html_score_passes_the_title_through():
 
     assert "Crypto regime: +12.3 (neutral)" in page
     assert 'data-label="neutral"' in page
+
+
+def test_render_html_checks_wraps_each_line_in_a_paragraph_and_escapes():
+    out = report.render_html_checks("A & B: ok\nC: MISMATCH")
+
+    assert out == '<section class="checks"><p>A &amp; B: ok</p><p>C: MISMATCH</p></section>'

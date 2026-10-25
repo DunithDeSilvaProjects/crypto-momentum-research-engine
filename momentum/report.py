@@ -78,3 +78,8 @@ def render_html_rules(rules: list) -> str:
         for r in rules
     )
     return f'<details class="rules"><summary>Rules and assumptions</summary><table>{head}{rows}</table></details>'
+
+
+def render_html_checks(text: str) -> str:
+    body = "".join(f"<p>{html.escape(line)}</p>" for line in text.split("\n"))
+    return f'<section class="checks">{body}</section>'
