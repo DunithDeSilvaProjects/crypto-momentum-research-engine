@@ -543,3 +543,15 @@ def test_funding_panel_uses_each_coins_own_schedule_and_zero_fills_gaps():
     np.testing.assert_allclose(panel["B"], [0.001, 0.0002, 0])
     assert list(panel.columns) == ["A", "B"]
     assert panel.index.equals(index)
+
+def test_funding_panel_matches_a_timezone_aware_index():
+    times = pd.to_datetime(["2026-01-01 00:00", "2026-01-01 08:00", "2026-01-01 16:00"])
+    rates = pd.Series([0.0001, 0.0002, 0.0003], index=times)
+    index = pd.date_range("2026-01-01", periods=2, tz="UTC")
+
+    panel = crypto.funding_panel(["A"], start_ms=0, index=index,
+                                 fetch=lambda symbol, start_ms: rates)
+
+    np.testing.assert_allclose(panel["A"], [0.0006, 0])
+    assert panel.index.equals(index)
+    
