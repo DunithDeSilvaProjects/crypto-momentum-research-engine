@@ -3,12 +3,12 @@ import yfinance as yf
 import numpy as np
 
 
-def fetch_yf_closes(symbols: dict, start: str) -> pd.DataFrame:
+def fetch_yf_closes(symbols: dict, start: str, download=None) -> pd.DataFrame:
     raw = yf.download(list(symbols.values()), start=start, progress=False)
     if raw.empty:
         raise ValueError(f"yfinance returned no data for {list(symbols.values())}")
-    closes = raw["Close"]
-    return closes.rename(columns={ticker: name for name, ticker in symbols.items()})
+    closes = raw["Close"].rename(columns={ticker: name for name, ticker in symbols.items()})
+    return refill_empty(closes, symbols, start, download or download_single_close)
 
 def fetch_yf_optional(symbols, start, fetch=fetch_yf_closes):
     try:
@@ -42,3 +42,11 @@ def refill_empty(closes: pd.DataFrame, symbols: dict, start: str, download) -> p
         if len(single) > 0:
             out[name] = single.reindex(out.index)
     return out
+
+
+def download_single_close(ticker: str, start: str) -> pd.Series:
+    raw = yf.download(ticker, start=start, progress=False)
+    if raw.empty:
+        return pd.Series(dtype=float)
+    close = raw["Close"]
+    return close.iloc[:, 0] if isinstance(close, pd.DataFrame) else close

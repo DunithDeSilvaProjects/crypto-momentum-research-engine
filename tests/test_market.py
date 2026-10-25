@@ -104,3 +104,20 @@ def test_refill_empty_requests_only_empty_or_missing_tickers():
     assert out["NK"].tolist() == [10.0, 11.0]
     assert out["SPX"].tolist() == [1.0, 2.0]
     assert "EU" not in out.columns
+
+def test_fetch_yf_closes_refills_a_ticker_the_batch_returned_empty(monkeypatch):
+    index = pd.to_datetime(["2026-10-22", "2026-10-23"])
+    batch = pd.concat(
+        {"Close": pd.DataFrame({"^GSPC": [1.0, 2.0], "^N225": [np.nan, np.nan]}, index=index)},
+        axis=1,
+    )
+    monkeypatch.setattr(market.yf, "download", lambda *args, **kwargs: batch)
+
+    out = market.fetch_yf_closes(
+        {"SPX": "^GSPC", "NK": "^N225"}, "2026-01-01",
+        download=lambda ticker, start: pd.Series([10.0, 11.0], index=index),
+    )
+
+    assert list(out.columns) == ["SPX", "NK"]
+    assert out["SPX"].tolist() == [1.0, 2.0]
+    assert out["NK"].tolist() == [10, 11]
