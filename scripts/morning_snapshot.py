@@ -16,6 +16,7 @@ UNITS = {
     "VIX": "pct", "SP500": "pct", "NASDAQCOM": "pct",
     "DCOILWTICO": "pct", "DXY": "pct", "GOLD": "pct", "NDX": "pct",
     "BTC": "pct", "ETH": "pct",
+    "SX5E": "pct", "N225": "pct",
 }
 WINDOWS = (1, 5, 20)
 
@@ -25,6 +26,7 @@ LABELS = {
     "VIX": "VIX", "SP500": "S&P 500", "NASDAQCOM": "Nasdaq Composite",
     "DCOILWTICO": "WTI crude", "DXY": "US Dollar Index (DXY)", "GOLD": "Gold futures", "NDX": "Nasdaq 100",
     "BTC": "Bitcoin (spot)", "ETH": "Ethereum (spot)",
+    "SX5E": "Euro Stoxx 50", "N225": "Nikkei 225",
 }
 TRADITIONAL_SPEC = {
     "equities":   {"col": "SP500",        "unit": "pct", "up_is_good": True,  "weight": 20},
@@ -47,7 +49,7 @@ CRYPTO_NAMES = {
 }
 
 MAX_AGE_DAYS = 3
-YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX"}
+YF_SYMBOLS = {"DXY": "DX-Y.NYB", "GOLD": "GC=F", "NDX": "^NDX","VIX": "^VIX", "SX5E": "^STOXX50E", "N225": "^N225"}
 COIN_NAMES = {"BTCUSDT": "BTC", "ETHUSDT": "ETH"}
 SITE_DIR = Path("site")
 
