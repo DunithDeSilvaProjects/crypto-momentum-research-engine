@@ -136,3 +136,23 @@ def test_prefer_fresh_takes_fresh_values_and_falls_back_for_older_dates():
     assert out.index[-1] == pd.Timestamp("2026-10-23")
     empty = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
     assert market.prefer_fresh(empty, fred).tolist() == [100.0, 101.5]
+
+
+def test_overlay_fresh_extends_a_column_and_ignores_unmapped_ones():
+    base = pd.DataFrame(
+        {"SP500": [100.0, 101.5], "DGS10": [4.9, 4.95]},
+        index=pd.to_datetime(["2026-10-20", "2026-10-21"]),
+    )
+    fresh = pd.DataFrame(
+        {"SP500_YF": [101.0, 102.0, 103.0], "VIX": [20.0, 21.0, 22.0]},
+        index=pd.to_datetime(["2026-10-21", "2026-10-22", "2026-10-23"]),
+    )
+
+    out = market.overlay_fresh(base, fresh, {"SP500": "SP500_YF"})
+
+    assert out["SP500"].tolist() == [100.0, 101.0, 102.0, 103.0]
+    assert out["DGS10"].tolist()[:2] == [4.9, 4.95]
+    assert out["DGS10"].isna().tolist() == [False, False, True, True]
+    assert "VIX" not in out.columns
+    down = pd.DataFrame(index=pd.DatetimeIndex([]))
+    assert market.overlay_fresh(base, down, {"SP500": "SP500_YF"})["SP500"].tolist() == [100.0, 101.5]

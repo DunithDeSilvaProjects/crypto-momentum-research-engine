@@ -53,3 +53,11 @@ def download_single_close(ticker: str, start: str) -> pd.Series:
 
 def prefer_fresh(fresh: pd.Series, fallback: pd.Series) -> pd.Series:
     return fresh.combine_first(fallback)
+
+
+def overlay_fresh(frame: pd.DataFrame, fresh: pd.DataFrame, mapping: dict) -> pd.DataFrame:
+    out = frame.reindex(frame.index.union(fresh.index))
+    for target, source in mapping.items():
+        if source in fresh.columns:
+            out[target] = prefer_fresh(fresh[source], frame[target]).reindex(out.index)
+    return out
