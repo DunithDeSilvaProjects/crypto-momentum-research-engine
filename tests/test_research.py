@@ -28,3 +28,20 @@ def test_rank_ic_is_the_daily_spearman_correlation_and_needs_enough_coins():
     assert strict.iloc[1] == pytest.approx(-0.9)
     assert np.isnan(strict.iloc[2])
     assert loose.iloc[2] == pytest.approx(1)
+
+
+def test_ic_summary_samples_every_step_th_day_to_avoid_overlap():
+    ic = pd.Series([np.nan, 0.1, 0.3, -0.1, 0.5, 0.1, 0.3])
+
+    daily = research.ic_summary(ic, step=1)
+    weekly = research.ic_summary(ic, step=2)
+
+    assert daily["n"] == 6
+    assert daily["mean"] == pytest.approx(0.2)
+    assert daily["t"] == pytest.approx(2.3355, abs=1e-3)
+    assert daily["hit_rate"] == pytest.approx(5 / 6)
+
+    assert weekly["n"] == 3
+    assert weekly["mean"] == pytest.approx(0.1/3)
+    assert weekly["t"] == pytest.approx(0.5)
+    assert weekly["hit_rate"] == pytest.approx(2 / 3)
