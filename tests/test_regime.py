@@ -106,3 +106,29 @@ def test_borderline_flags_moves_within_a_quarter_of_the_threshold_either_side():
     assert regime.borderline(2.6, 2.0) is False
     assert regime.borderline(np.nan, 2.0) is False
     assert regime.borderline(0.0055, 0.005) is True
+
+
+def test_yield_regime_report_lists_the_borderline_inputs():
+    idx = pd.date_range("2026-10-12", periods=8, freq="B")
+    df = pd.DataFrame(
+        {"DFII10": [2.0] * 8, "T10YIE": [2.30] * 7 + [2.32], "SP500": [100.0] * 8},
+        index=idx,
+    )
+
+    rep = regime.yield_regime_report(df)
+    assert rep["borderline"] == ["breakeven"]
+
+
+def test_render_yield_regime_adds_a_borderline_line_only_when_flagged():
+    rep = {
+        "regime": "mixed",
+        "changes": {"real_yield": -8.0, "breakeven": 2.0, "equities": 0.005},
+        "directions": {"real_yield": -1, "breakeven": 1, "equities": 1},
+        "asof": pd.Timestamp("2026-10-21"),
+        "borderline": ["breakeven", "equities"],
+    }
+
+    text = regime.render_yield_regime(rep)
+
+    assert text.splitlines()[-1].startswith("Borderline: 10y breakeven, S&P 500")
+    assert "Borderline" not in regime.render_yield_regime({**rep, "borderline": []})

@@ -31,7 +31,7 @@ YIELD_INPUTS = {
 
 
 def yield_regime_report(df, n=5, dead_bp=2.0, dead_pct=0.005) -> dict:
-    changes, dirs = {}, {}
+    changes, dirs, near = {}, {}, []
     cols = [col for col, _ in YIELD_INPUTS.values() if col in df.columns]
     asof = df[cols].dropna().index.max()
     df = df[df.index <= asof]
@@ -40,11 +40,14 @@ def yield_regime_report(df, n=5, dead_bp=2.0, dead_pct=0.005) -> dict:
         dead = dead_bp if unit == "bp" else dead_pct
         changes[name] = change
         dirs[name] = direction(change, dead)
+        if borderline(change, dead):
+            near.append(name)
     return {
         "regime": yield_regime(dirs["real_yield"], dirs["breakeven"], dirs["equities"]),
         "changes": changes,
         "directions": dirs,
         "asof": asof,
+        "borderline": near,
     }
 
 _NAMES = {"real_yield": "10y real yield", "breakeven": "10y breakeven", "equities": "S&P 500"}
@@ -62,6 +65,10 @@ def render_yield_regime(rep: dict) -> str:
     asof = rep.get("asof")
     if asof is not None and not pd.isna(asof):
         body += f", as of {asof:%d %b}"
+    near = rep.get("borderline", [])
+    if near:
+        names = ", ".join(_NAMES[name] for name in near)
+        body += f"\nBorderline: {names} within 25% of the flat threshold, so the label could change on a small revision."
     return head + "\n" + body
 
 def borderline(change: float, dead: float, margin: float = 0.25) -> bool:
