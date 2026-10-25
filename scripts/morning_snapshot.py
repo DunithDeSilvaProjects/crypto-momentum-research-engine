@@ -89,7 +89,7 @@ def main() -> None:
         print(note)
     if stale:
         print("Excluded as stale: " + ", ".join(LABELS.get(c, c) for c in stale))
-    print("Source: FRED (daily). S&P 500 (with FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed).")
+    print("Source: FRED (daily) for rates, credit spreads, Nasdaq Composite and WTI. Yahoo Finance via yfinance (unofficial, delayed) for the S&P 500 (FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225.")
     generated = now.strftime("%Y-%m-%d %H:%M UTC")
     
     yrep = regime.yield_regime_report(df.drop(columns=stale))
@@ -102,7 +102,7 @@ def main() -> None:
     print()
     print(check_text)
     
-    notes = ["Source: FRED (daily). S&P 500 (with FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225 from Yahoo Finance via yfinance (unofficial, delayed)."]
+    notes = ["Source: FRED (daily) for rates, credit spreads, Nasdaq Composite and WTI. Yahoo Finance via yfinance (unofficial, delayed) for the S&P 500 (FRED as fallback), DXY, VIX, gold, Nasdaq 100, Euro Stoxx 50 and Nikkei 225."]
     if yf_note:
         notes.append(yf_note)
     if stale:
